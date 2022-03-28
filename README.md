@@ -1,2 +1,3 @@
-# tomreh-rasmushu-project
-An EPIC INDA project by tomreh and rasmushu
+# Project Rayman
+
+### A 3d fractal ray marching program
