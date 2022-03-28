@@ -10,6 +10,7 @@ build
 bin
 obj
 release
+project
 ipch
 src/scripts.c
 **.lnt
