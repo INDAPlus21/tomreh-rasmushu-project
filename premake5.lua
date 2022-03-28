@@ -1,56 +1,71 @@
 workspace "tomreh-rasmushu-project"
-   location "project"
    configurations { "Debug", "Release" }
-   platforms { "Win32", "x64", "macosx" }
+   platforms { "MacOS", "x64", "Win32" }
 
    filter { "platforms:Win32" }
-      system "Windows"
+      system "windows"
       architecture "x86"
 
    filter { "platforms:x64" }
-      system "Windows"
+      system "windows"
       architecture "x64"
 
-   filter { "platforms:macosx" }
+   filter { "platforms:MacOS" }
       system "macosx"
       architecture "x64"
 
    filter { }
 
 
-project "Project Rayman"
+project "Rayman"
    kind "ConsoleApp"
    language "C++"
-   location "project/Project Rayman"
    targetdir "bin/%{cfg.buildcfg}/%{cfg.system}/%{cfg.architecture}"
 
    files { "**.h", "**.cpp" }
 
    includedirs {
-      "dep/include",
+      "./dep/glfw-3.3.6/include",
+      "./dep/glew-2.2.0_1/include",
    }
 
-      links {
-         "glfw"
-      }
+      filter { "system:macosx" }
+         links {
+            "glfw",
+            "glew",
+            "OpenGL.framework"
+         }
 
-      filter "system:Windows"
+      filter { "system:windows" }
+         links {
+            "glew32s",
+            "opengl32",
+            "glfw3"
+         }
+
+      filter { "system:windows" } 
          filter "architecture:x86"
             libdirs {
-               "dep/win32"
+               "./dep/glfw-3.3.6/win32",
+               "./dep/glew-2.2.0_1/win32"
             }
       
-      filter "system:Windows"
+      filter { "system:windows" }
          filter "architecture:x64"
             libdirs {
-               "dep/x64"
+               "dep/glfw-3.3.6/x64",
+               "dep/glew-2.2.0_1/x64"
             }
 
-      filter "system:macosx"
+      filter { "system:macosx" }
          filter "architecture:x64"
             libdirs {
-               "dep/macos"
+               "dep/glfw-3.3.6/macos",
+               "dep/glew-2.2.0_1/macos",
             }
+
+         buildoptions {"-F /Library/Frameworks"}
+         linkoptions {"-F /Library/Frameworks"}
 
    filter "configurations:Debug"
       defines { "DEBUG" }
