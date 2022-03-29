@@ -22,7 +22,7 @@ project "Rayman"
    language "C++"
    targetdir "bin/%{cfg.buildcfg}/%{cfg.system}/%{cfg.architecture}"
 
-   files { "**.h", "**.cpp" }
+   files { "./src/**.h", "./src/**.cpp" }
 
    includedirs {
       "dep/glfw-3.3.6/include",
@@ -63,6 +63,7 @@ project "Rayman"
                "dep/glfw-3.3.6/macos",
                "dep/glew-2.2.0_1/macos",
             }
+
 
          buildoptions {"-F /Library/Frameworks"}
          linkoptions {"-F /Library/Frameworks"}
