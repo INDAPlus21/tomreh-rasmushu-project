@@ -22,7 +22,7 @@ project "Rayman"
    language "C++"
    targetdir "bin/%{cfg.buildcfg}/%{cfg.system}/%{cfg.architecture}"
 
-   files { "**.h", "**.cpp" }
+   files { "./src/**.h", "./src/**.cpp" }
 
    includedirs {
       "dep/glfw-3.3.6/include",
