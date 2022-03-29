@@ -47,22 +47,23 @@ project "Rayman"
          }
 
       filter { "system:windows", "architecture:x86" } 
-         libdirs {
-            "dep/glfw-3.3.6/win32",
-            "dep/glew-2.2.0_1/win32"
-         }
-   
+            libdirs {
+               "dep/glfw-3.3.6/win32",
+               "dep/glew-2.2.0_1/win32"
+            }
+      
       filter { "system:windows", "architecture:x64" }
-         libdirs {
-            "./dep/glfw-3.3.6/x64",
-            "./dep/glew-2.2.0_1/x64"
-         }
+            libdirs {
+               "./dep/glfw-3.3.6/x64",
+               "./dep/glew-2.2.0_1/x64"
+            }
 
       filter { "system:macosx", "architecture:x64" }
-         libdirs {
-            "dep/glfw-3.3.6/macos",
-            "dep/glew-2.2.0_1/macos",
-         }
+            libdirs {
+               "dep/glfw-3.3.6/macos",
+               "dep/glew-2.2.0_1/macos",
+            }
+
 
          buildoptions {"-F /Library/Frameworks"}
          linkoptions {"-F /Library/Frameworks"}
