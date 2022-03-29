@@ -38,6 +38,7 @@ Makefile
 .cproject
 .settings
 .buildpath
+.vs/
 
 *.bbprojectsettings
 Scratchpad.txt
