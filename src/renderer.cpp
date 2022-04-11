@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "renderer.h"
+#include "exceptions.h"
 
 #include "game.h"
 
@@ -44,7 +45,7 @@ bool renderer_init()
         return false;
     }
 
-    glClearColor(0.3f, 0.7f, 1.0f, 1.0f);
+    GL_CALL(glClearColor(0.3f, 0.7f, 1.0f, 1.0f));
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
@@ -53,7 +54,7 @@ bool renderer_init()
 
 void renderer_prepare()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 }
 
 void renderer_render()
