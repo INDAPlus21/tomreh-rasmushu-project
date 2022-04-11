@@ -26,6 +26,8 @@ void game_run()
 
 	s_running = true;
 
+	CreateThings();
+
 	while (s_running)
 	{
 		renderer_prepare();
