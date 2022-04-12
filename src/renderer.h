@@ -41,5 +41,5 @@ void GenVertexArray(unsigned int *id);
 void DeleteVertexArray(unsigned int *id);
 void GenIndexBuffer(unsigned int *id, const unsigned int *data, int count);
 void DeleteIndexBuffer(unsigned int *id);
-void ConfigVertexArrrayLayout(unsigned int *va, unsigned int *vb, const Layout &layout);
+void ConfigVertexArrayLayout(unsigned int *va, unsigned int *vb, const Layout &layout);
 void AddToLayout(Layout &layout, GLuint type, unsigned int count, bool normalize = false);
