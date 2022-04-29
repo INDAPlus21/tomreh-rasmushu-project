@@ -1,4 +1,4 @@
-#pragma once
+#include "renderer.h"
 
-float *GenRectVertex(uint x, uint y, uint w, uint h);
-uint *GenRectIndex(uint val = 0);
+float *GenRectVertex(uint32_t x, uint32_t y, uint32_t w, uint32_t h);
+uint32_t *GenRectIndex(uint32_t val);

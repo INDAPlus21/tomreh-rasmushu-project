@@ -2,8 +2,7 @@
 
 #include "game.h"
 
-int main() {
-    
+int main() { 
     if (!game_init())
     {
         std::cout << "Game closed due to error" << std::endl;

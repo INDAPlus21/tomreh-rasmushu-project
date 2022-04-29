@@ -1,6 +1,8 @@
 #include "primatives.h"
 #include "renderer.h"
 
+#include <iostream>
+
 float *GenRectVertex(uint x, uint y, uint w, uint h)
 {
     float center_x = x / WINDOW_WIDTH;
