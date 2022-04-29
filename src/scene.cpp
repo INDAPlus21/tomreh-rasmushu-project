@@ -20,8 +20,8 @@ typedef std::bitset<MAX_COMPONENTS> Signature;
 template<typename T>
 struct ComponentArray
 {
-    std::vector<T> comparr;
-    std::unordered_map<u_int32_t, u_int32_t> indexmap;
+    std::vector<T> comparr(MAX_ENTITES);
+    std::unordered_map<Entity, u_int32_t> indexmap;
 
     void add(T component, Entity entityid)
     {
@@ -45,6 +45,14 @@ struct ComponentArray
             {
                 indexmap[kv.first] = kv.second - 1;
             }
+        }
+    }
+
+    void compEntityDestroyed(Entity entity)
+    {
+        if (indexmap.find(entity) != indexmap.end())
+        {
+            remove(entity);
         }
     }
 };
@@ -134,6 +142,16 @@ struct ComponentManager
     {
         return getCompArr<T>()->get(ent_id);
     }
+
+    void entityDestroyed(Entity entity)
+    {
+        for (auto const &pair : typemap)
+        {
+            auto const &type_id = pair.first;
+            auto const &component = pair.second;
+            // TODO: Solve the problem, fuck classes bror
+        }
+    }
 };
 
 struct SystemType
@@ -181,6 +199,22 @@ struct SystemManager
         return sys_id;
     }
 
+    void setSignature(System system, Signature signature)
+    {
+        sign_list[system] = signature;
+    }
+
+    void entityDestroyed(Entity entity)
+    {
+        for (System i = 0; i < MAX_SYSTEMS; i ++)
+        {
+            if (sys_list[i])
+            {
+                sys_list[i]->entities.erase(entity);
+            }
+        }   
+    }
+
     void entitySignatureChanged(Entity entity, Signature signature)
     {
         for (System i = 0; i < MAX_SYSTEMS; i ++)
@@ -190,6 +224,10 @@ struct SystemManager
                 if ((signature & sign_list[i]) == sign_list[i])
                 {
                     sys_list[i]->entities.insert(entity);
+                } 
+                else
+                {
+                    sys_list[i]->entities.erase(entity);
                 }
             }
         }
