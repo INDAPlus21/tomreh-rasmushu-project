@@ -123,7 +123,7 @@ DrawObject CreateDrawObject(ObjectType type, uint x, uint y, bool post_process, 
     if (type == rectangle)
     {
         verts = GenRectVertex(0, 0, 255, 255);
-        indices = GenRectIndex();
+        //indices = GenRectIndex();
     }
 
     GenVertexArray(&va);
