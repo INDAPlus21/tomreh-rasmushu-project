@@ -10,9 +10,28 @@
 
 typedef unsigned int uint;
 
+struct FullScreenQuad
+{
+    uint32_t va_handle;
+    uint32_t vb_handle;
+    uint32_t ib_handle;
+    uint32_t program_handle;
+};
+
+struct RenderData
+{
+    uint32_t va_handle;
+    uint32_t vb_handle;
+    uint32_t ib_handle;
+    uint32_t program_handle;
+    uint32_t fb_handle;
+};
+
+FullScreenQuad fsq;
+
 bool renderer_init();
 void renderer_prepare();
-void renderer_render();
+void renderObject(RenderData object);
 void renderer_present();
 void renderer_clean_up();
 

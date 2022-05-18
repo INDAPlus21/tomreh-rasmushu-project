@@ -31,7 +31,6 @@ void game_run()
 	while (s_running)
 	{
 		renderer_prepare();
-		renderer_render();
 		renderer_present();
 
 		// HACK: Delta time should be calculated correctly

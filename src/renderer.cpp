@@ -11,6 +11,9 @@
 
 const char *vertexShaderSource = "res/shaders/vertex.vert";
 const char *fragmentShaderSource = "res/shaders/fragment.frag";
+const char *ppFragShaderSource = "res/shaders/pp.frag";
+const char *ppVertShaderSource = "res/shaders/pp.vert";
+
 static GLFWwindow* s_window = nullptr;
 
 typedef struct VertexBufferElement
@@ -37,35 +40,55 @@ typedef struct Layout
     std::vector<VertexBufferElement> elements;
 };
 
-typedef struct DrawObject
-{
-    uint va;
-    uint vb;
-    uint ib;
-    bool pp;
-    uint *draw_program;
-    uint *fb;
-    Layout layout;
-};
-
-typedef struct FullscreenQuad
-{
-    uint va;
-    uint vb;
-    uint ib;
-};
-
-enum ObjectType
-{
-    triangle,
-    rectangle,
-    circle
-};
-
 static void glfwError(int id, const char* description)
 {
     std::cout << description << std::endl;
 }
+
+void createFullscreenQuad()
+{
+    float verts[] = {
+        -1.0f, -1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f
+    };
+
+    unsigned int indices[6] = {
+        0, 1, 2,
+        3, 2, 0
+    };
+
+    uint32_t vb;
+    uint32_t ib;
+    uint32_t va;
+    genVertexBuffer(&vb, verts, 16 * sizeof(float));
+    genIndexBuffer(&ib, indices, 6);
+    genVertexArray(&va);
+    uint32_t program = CreateProgram(ppVertShaderSource, ppFragShaderSource);
+
+    Layout layout;
+    addToLayout(layout, GL_FLOAT, 2);
+    addToLayout(layout, GL_FLOAT, 2);
+    configVertexArrayLayout(&va, &vb, layout);
+
+    fsq.vb_handle = vb;
+    fsq.ib_handle = ib;
+    fsq.va_handle = va;   
+    fsq.program_handle = program;
+}
+
+void initRenderObject(RenderData &obj)
+{
+    uint32_t vb;
+    uint32_t ib;
+    uint32_t va;
+    uint32_t rb;
+    uint32_t tex;
+    uint32_t fb;
+
+    
+};
 
 bool renderer_init()
 {
@@ -109,66 +132,9 @@ bool renderer_init()
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
+    createFullscreenQuad();
+
     return true;
-}
-
-// x, y, width, height, ska vara i pixel koordinater
-DrawObject CreateDrawObject(ObjectType type, uint x, uint y, bool post_process,  uint width = 0, uint height = 0)
-{
-    uint va, vb, ib, program;
-    float *verts;
-    uint *indices;
-    Layout layout = {0, std::vector<VertexBufferElement>()};
-
-    if (type == rectangle)
-    {
-        verts = GenRectVertex(0, 0, 255, 255);
-        //indices = GenRectIndex();
-    }
-
-    GenVertexArray(&va);
-    GenVertexBuffer(&vb, verts, 4 * 3 * sizeof(float));
-    AddToLayout(layout, GL_FLOAT, 3);
-    ConfigVertexArrayLayout(&va, &vb, layout);
-    GenIndexBuffer(&ib, indices, 6);
-    program = CreateProgram(vertexShaderSource, fragmentShaderSource);
-    uint programs[2];
-    programs[0] = program;
-    uint fb_info[3] = {0, 0, 0};
-
-    if (post_process)
-    {  
-        // Change shader sources to correct ones
-        uint pp_program = CreateProgram(vertexShaderSource, fragmentShaderSource);
-        programs[1] = pp_program;
-        GenRenderBuffer(&fb_info[0], WINDOW_WIDTH, WINDOW_HEIGHT);
-        GenTexture2D(&fb_info[1], WINDOW_WIDTH, WINDOW_HEIGHT);
-        GenFrameBuffer(&fb_info[2], fb_info[0], fb_info[1]);
-    }
-
-    DrawObject returnthing = {va, vb, ib, post_process, programs, fb_info, layout};
-}
-
-void DrawDrawObject(DrawObject &object)
-{
-
-}
-
-FullscreenQuad GenFullscreenRect()
-{
-    float verts[] = {
-        -1.0f, -1.0f, 0.0f, 0.0f,
-         1.0f, -1.0f, 1.0f, 0.0f,
-         1.0f,  1.0f, 1.0f, 1.0f,
-        -1.0f,  1.0f, 0.0f, 1.0f
-    };
-
-        uint indices[] = {
-        0, 1, 2,
-        3, 2, 0
-    };
-
-    
 }
 
 void renderer_prepare()
@@ -176,13 +142,23 @@ void renderer_prepare()
     GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 }
 
-void renderer_render()
+void renderObject(RenderData &object)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, object.vb_handle);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object.ib_handle);
+    glBindVertexArray(object.va_handle);
+    glUseProgram(object.program_handle);
+}
+
+void renderObject()
 {
     // HACK: Move to event handler later
     if (glfwWindowShouldClose(s_window))
     {
         game_close();
     }
+
+
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
@@ -198,41 +174,41 @@ void renderer_clean_up()
     glfwTerminate();
 }
 
-void GenVertexBuffer(uint *id, const void* data, uint size) 
+void genVertexBuffer(uint *id, const void* data, uint size) 
 {
     glGenBuffers(1, id);
     glBindBuffer(GL_ARRAY_BUFFER, *id);
     glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
 }
 
-void DeleteVetexBuffer(uint *id)
+void deleteVetexBuffer(uint *id)
 {
     glDeleteBuffers(GL_ARRAY_BUFFER, id);
 }
 
-void GenVertexArray(uint *id)
+void genVertexArray(uint *id)
 {
     glGenVertexArrays(1, id);
 }
 
-void DeleteVertexArray(uint *id)
+void deleteVertexArray(uint *id)
 {
     glDeleteVertexArrays(1, id);
 }
 
-void GenIndexBuffer(uint *id, const uint *data, int count) 
+void genIndexBuffer(uint *id, const uint *data, int count) 
 {
     glGenBuffers(1, id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *id);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint), data, GL_STATIC_DRAW);
 }
 
-void DeleteIndexBuffer(uint *id)
+void deleteIndexBuffer(uint *id)
 {
     glDeleteBuffers(1, id);
 }
 
-void ConfigVertexArrayLayout(uint *va, uint *vb, const Layout &layout)
+void configVertexArrayLayout(uint *va, uint *vb, const Layout &layout)
 {
     glBindBuffer(GL_ARRAY_BUFFER, *vb);
     glBindVertexArray(*va);
@@ -251,7 +227,7 @@ void ConfigVertexArrayLayout(uint *va, uint *vb, const Layout &layout)
     
 }
 
-void AddToLayout(Layout &layout, GLuint type, uint count, bool normalize = false)
+void addToLayout(Layout &layout, GLuint type, uint count, bool normalize = false)
 {
     struct VertexBufferElement elem = {type, count, normalize};
 
