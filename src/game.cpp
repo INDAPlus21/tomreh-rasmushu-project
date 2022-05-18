@@ -4,8 +4,6 @@
 #include <iostream>
 #include <chrono>
 
-#include "renderer.h"
-
 static bool s_running = false;
 
 bool game_init()

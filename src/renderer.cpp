@@ -87,7 +87,6 @@ void initRenderObject(RenderData &obj)
     uint32_t tex;
     uint32_t fb;
 
-    
 };
 
 bool renderer_init()
