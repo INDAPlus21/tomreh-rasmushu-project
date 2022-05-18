@@ -6,6 +6,8 @@
 
 #include "shader.h"
 #include "game.h"
+#include "keyboard.h"
+#include "mouse.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -38,7 +40,22 @@ bool renderer_init()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
     
-    s_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Rayman", NULL, NULL);
+    int monitor_count = 0;
+    GLFWmonitor** monitors = glfwGetMonitors(&monitor_count);
+    printf("\nMonitor count: %d\n", monitor_count);
+    const GLFWvidmode* mode = glfwGetVideoMode(monitors[0]);
+
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
+    printf("Color format: %d bit RGB\n\n", mode->redBits + mode->greenBits + mode->blueBits);
+    printf("Refresh rate: %d Hz\n\n", mode->refreshRate);
+
+    s_window = glfwCreateWindow(mode->width, mode->height, "Rayman", monitors[0], NULL);
+
+    //s_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Rayman", NULL, NULL);
 
 
     if (!s_window)
@@ -61,8 +78,16 @@ bool renderer_init()
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
+    keyboard_init(s_window);
+    mouse_init(s_window);
+    mouse_position_set(256.0f, 256.0f);
+
     return true;
 }
+
+static GLint cam_pos_location = 0;
+static GLint target_pos_location = 0;
+static GLint power_location = 0;
 
 void CreateThings() 
 {
@@ -71,10 +96,10 @@ void CreateThings()
     unsigned int ib;
 
     float verts[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.5f,  0.5f, 0.0f,
-        -0.5f,  0.5f, 0.0f
+        -1.0f, -1.0f, 0.0f,
+         1.0f, -1.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f
     };
 
     unsigned int indices[6] = {
@@ -92,6 +117,10 @@ void CreateThings()
 
     GLuint program = CreateProgram(vertexShaderSource, fragmentShaderSource);
     glUseProgram(program);
+
+    cam_pos_location = glGetUniformLocation(program, "camera_position");
+    target_pos_location = glGetUniformLocation(program, "target_position");
+    power_location = glGetUniformLocation(program, "fractal_power");
 }
 
 void renderer_prepare()
@@ -103,6 +132,11 @@ void renderer_render()
 {
     // HACK: Move to event handler later
     if (glfwWindowShouldClose(s_window))
+    {
+        game_close();
+    }
+
+    else if (keyboard_is_pressed(GLFW_KEY_ESCAPE))
     {
         game_close();
     }
