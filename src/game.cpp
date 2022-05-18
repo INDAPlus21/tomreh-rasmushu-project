@@ -6,9 +6,18 @@
 
 static bool s_running = false;
 
+void createRenderObject()
+{
+	Renderer::RenderData obj;
+	Renderer::addRenderObject(&obj);
+	renderdata.push_back(obj);
+}
+
 bool game_init()
 {
 	std::cout << "Initializing game" << std::endl;
+
+	createRenderObject();
 
 	if (!renderer_init())
 	{
@@ -24,12 +33,17 @@ void game_run()
 
 	s_running = true;
 
-	CreateThings();
-
 	while (s_running)
 	{
-		renderer_prepare();
-		renderer_present();
+		Renderer::renderer_prepare();
+		Renderer::renderer_present();
+
+		for (Renderer::RenderData data : renderdata)
+		{
+			Renderer::renderObject(&data);
+		}
+
+		Renderer::drawToScreen();
 
 		// HACK: Delta time should be calculated correctly
 		std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(16));

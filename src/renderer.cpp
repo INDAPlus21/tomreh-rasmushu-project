@@ -45,7 +45,9 @@ static void glfwError(int id, const char* description)
     std::cout << description << std::endl;
 }
 
-void createFullscreenQuad()
+using namespace Renderer;
+
+void Renderer::createFullscreenQuad()
 {
     float verts[] = {
         -1.0f, -1.0f, 0.0f, 0.0f,
@@ -78,18 +80,52 @@ void createFullscreenQuad()
     fsq.program_handle = program;
 }
 
-void initRenderObject(RenderData &obj)
+// TODO: make good
+void Renderer::addRenderObject(RenderData &object)
 {
+        float verts[] = {
+        -1.0f, -1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f
+    };
+
+    unsigned int indices[6] = {
+        0, 1, 2,
+        3, 2, 0
+    };
+
     uint32_t vb;
     uint32_t ib;
     uint32_t va;
-    uint32_t rb;
+    genVertexBuffer(&vb, verts, 16 * sizeof(float));
+    genIndexBuffer(&ib, indices, 6);
+    genVertexArray(&va);
+    uint32_t program = CreateProgram(vertexShaderSource, fragmentShaderSource);
+
+    Layout layout;
+    addToLayout(layout, GL_FLOAT, 2);
+    addToLayout(layout, GL_FLOAT, 2);
+    configVertexArrayLayout(&va, &vb, layout);
+
     uint32_t tex;
+    uint32_t rb;
     uint32_t fb;
 
-};
+    // TODO: borde inte vara fullscreen
+    GenTexture2D(&tex, WINDOW_WIDTH, WINDOW_HEIGHT);
+    GenRenderBuffer(&rb, WINDOW_WIDTH, WINDOW_HEIGHT);
+    GenFrameBuffer(&fb, rb, tex);
 
-bool renderer_init()
+    object.vb_handle = vb;
+    object.ib_handle = ib;
+    object.va_handle = va;   
+    object.program_handle = program;
+    object.fb_handle = fb;
+    object.out_tex_handle = tex;
+}
+
+bool Renderer::renderer_init()
 {
     std::cout << "Initializing renderer" << std::endl;
 
@@ -136,73 +172,78 @@ bool renderer_init()
     return true;
 }
 
-void renderer_prepare()
+void Renderer::renderer_prepare()
 {
     GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 }
 
-void renderObject(RenderData &object)
+void Renderer::renderObject(RenderData &object)
 {
     glBindBuffer(GL_ARRAY_BUFFER, object.vb_handle);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object.ib_handle);
     glBindVertexArray(object.va_handle);
     glUseProgram(object.program_handle);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, object.fb_handle);
+
+    // 6 should be object.ib_handle.count()
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, object.out_tex_handle);
 }
 
-void renderObject()
+void Renderer::drawToScreen()
 {
-    // HACK: Move to event handler later
-    if (glfwWindowShouldClose(s_window))
-    {
-        game_close();
-    }
-
-
+    glBindBuffer(GL_ARRAY_BUFFER, fsq.vb_handle);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fsq.ib_handle);
+    glBindVertexArray(fsq.va_handle);
+    glUseProgram(fsq.program_handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
-void renderer_present()
+void Renderer::renderer_present()
 {
     glfwSwapBuffers(s_window);
     glfwPollEvents();
 }
 
-void renderer_clean_up()
+void Renderer::renderer_clean_up()
 {
     glfwTerminate();
 }
 
-void genVertexBuffer(uint *id, const void* data, uint size) 
+void Renderer::genVertexBuffer(uint *id, const void* data, uint size) 
 {
     glGenBuffers(1, id);
     glBindBuffer(GL_ARRAY_BUFFER, *id);
     glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
 }
 
-void deleteVetexBuffer(uint *id)
+void Renderer::deleteVetexBuffer(uint *id)
 {
     glDeleteBuffers(GL_ARRAY_BUFFER, id);
 }
 
-void genVertexArray(uint *id)
+void Renderer::genVertexArray(uint *id)
 {
     glGenVertexArrays(1, id);
 }
 
-void deleteVertexArray(uint *id)
+void Renderer::deleteVertexArray(uint *id)
 {
     glDeleteVertexArrays(1, id);
 }
 
-void genIndexBuffer(uint *id, const uint *data, int count) 
+void Renderer::genIndexBuffer(uint *id, const uint *data, int count) 
 {
     glGenBuffers(1, id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *id);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint), data, GL_STATIC_DRAW);
 }
 
-void deleteIndexBuffer(uint *id)
+void Renderer::deleteIndexBuffer(uint *id)
 {
     glDeleteBuffers(1, id);
 }

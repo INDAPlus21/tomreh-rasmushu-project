@@ -10,36 +10,46 @@
 
 typedef unsigned int uint;
 
-struct FullScreenQuad
+namespace Renderer
 {
-    uint32_t va_handle;
-    uint32_t vb_handle;
-    uint32_t ib_handle;
-    uint32_t program_handle;
-};
+    struct FullScreenQuad
+    {
+        uint32_t va_handle;
+        uint32_t vb_handle;
+        uint32_t ib_handle;
+        uint32_t program_handle;
+    };
 
-struct RenderData
-{
-    uint32_t va_handle;
-    uint32_t vb_handle;
-    uint32_t ib_handle;
-    uint32_t program_handle;
-    uint32_t fb_handle;
-};
+    // TODO: add count of ib_handle
+    struct RenderData
+    {
+        uint32_t va_handle;
+        uint32_t vb_handle;
+        uint32_t ib_handle;
+        uint32_t program_handle;
+        uint32_t fb_handle;
+        uint32_t out_tex_handle;
+    };
 
-FullScreenQuad fsq;
+    FullScreenQuad fsq;
 
-bool renderer_init();
-void renderer_prepare();
-void renderObject(RenderData object);
-void renderer_present();
-void renderer_clean_up();
+    bool renderer_init();
+    void renderer_prepare();
+    void renderObject(RenderData &object);
+    void renderer_present();
+    void renderer_clean_up();
+
+    void addRenderObject(RenderData &object);
+    void drawToScreen();
+
+    void createFullscreenQuad();
+    void renderObject(RenderData &object);
+    void genVertexBuffer(uint *id, const void* data, uint size);
+    void deleteVetexBuffer(unsigned int *id);
+    void genVertexArray(unsigned int *id);
+    void deleteVertexArray(unsigned int *id);
+    void genIndexBuffer(unsigned int *id, const unsigned int *data, int count);
+    void deleteIndexBuffer(unsigned int *id);
+}
 
 
-void CreateThings();
-void GenVertexBuffer(unsigned int *id, const void* data, unsigned int size);
-void DeleteVetexBuffer(unsigned int *id);
-void GenVertexArray(unsigned int *id);
-void DeleteVertexArray(unsigned int *id);
-void GenIndexBuffer(unsigned int *id, const unsigned int *data, int count);
-void DeleteIndexBuffer(unsigned int *id);
