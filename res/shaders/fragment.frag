@@ -4,13 +4,13 @@ in vec3 position_passed;
 
 out vec4 FragColor;
 
-//uniform float fractal_power;
-#define fractal_power 5.8f
+uniform float fractal_power;
+//#define fractal_power 5.8f
 
-//uniform vec3 camera_position;
-//uniform vec3 target_position;
-#define camera_position vec3(-3.0f, 0.5f, -0.5f)
-#define target_position vec3(0.0f, 0.0f, 0.0f)
+uniform vec3 camera_position;
+uniform vec3 target_position;
+//#define camera_position vec3(-3.0f, 0.5f, -0.5f)
+//#define target_position vec3(0.0f, 0.0f, 0.0f)
 
 //uniform float aspect_ratio; // window width / window height
 //uniform float tanh_fov; // tanhf(field of view)
@@ -20,6 +20,9 @@ out vec4 FragColor;
 
 //uniform vec3 sun_position;
 #define sun_position vec3(-200.0f, 500.0f, -300.0f)
+
+uniform int shadows_on;
+uniform int fractal_id;
 
 #define PI 3.1415f
 
@@ -190,7 +193,16 @@ float safe_distance(vec3 point)
     //sd = min(sd, point_sphere_distance(point, s1));
     //sd = min(sd, point_sphere_distance(point, s2));
     //sd = min(sd, point_box_distance(point, b1));
-    sd = min (sd, point_fractal_distance2(point));
+
+    if (fractal_id == 1)
+    {
+    sd = min (sd, point_fractal_distance(point));
+    }
+    
+    else
+    {
+        sd = min (sd, point_fractal_distance2(point));
+    }
 
     return sd;
 }
@@ -219,17 +231,17 @@ float calculate_shadow(vec3 point)
 
         if (abs(angle) < 0.025f)
         {
-            return 0.1f;
+            return 0.3f;
         }
 
 		if (t > RAY_T_MAX)
 		{
-			return sigmoid(clamp(smallest_angle * 16.0f, 0.0f, 1.0f)) * 0.9f + 0.1f;
+			return sigmoid(clamp(smallest_angle * 16.0f, 0.0f, 1.0f)) * 0.7f + 0.3f;
 		}
 
 		else if (sd < RAY_T_MIN)
 		{
-            return 0.1f;
+            return 0.3f;
 		}
 
 		t += sd;
@@ -244,8 +256,16 @@ vec3 calculate_color(vec3 point)
     float g = cos((d + 1.78f) * 8.0f) * 0.5f + 0.5f;
     float r = sin((d + 2.78f) * 8.1f) * 0.5f + 0.5f;
 
-    //return vec3(r, g, b);
-    return vec3(r, g, b) * calculate_shadow(point);
+    if (shadows_on == 1)
+    {
+        return vec3(r, g, b) * calculate_shadow(point);
+    }
+    
+    else
+    {
+        return vec3(r, g, b);
+    }
+    
 }
 
 void main()

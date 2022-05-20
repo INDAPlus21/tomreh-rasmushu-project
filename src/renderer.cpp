@@ -88,6 +88,8 @@ bool renderer_init()
 static GLint cam_pos_location = 0;
 static GLint target_pos_location = 0;
 static GLint power_location = 0;
+static GLint shadows_location = 0;
+static GLint fractal_location = 0;
 
 void CreateThings() 
 {
@@ -121,11 +123,124 @@ void CreateThings()
     cam_pos_location = glGetUniformLocation(program, "camera_position");
     target_pos_location = glGetUniformLocation(program, "target_position");
     power_location = glGetUniformLocation(program, "fractal_power");
+    shadows_location = glGetUniformLocation(program, "shadows_on");
+    fractal_location = glGetUniformLocation(program, "fractal_id");
+
+    std::cout << glGetString(GL_VENDOR) << std::endl;
+    std::cout << glGetString(GL_RENDERER) << std::endl;
+}
+
+static float cam_x = 0.0f;
+static float cam_y = 0.0f;
+static float cam_z = 0.0f;
+static float cam_rot_x = 0.0f;
+static float cam_rot_y = 0.0f;
+static float cam_speed = 0.005f;
+static float cam_sensitivity = 0.0005f;
+static float power = 5.8f;
+static bool shadows_on = false;
+static int fractal = 0;
+
+void load_camera()
+{
+    if (keyboard_is_pressed(GLFW_KEY_UP))
+    {
+        power *= 1.001f;
+    }
+
+    if (keyboard_is_pressed(GLFW_KEY_DOWN))
+    {
+        power /= 1.001f;
+    }
+
+    cam_rot_x -= (mouse_position_get_y() - 256.0f) * cam_sensitivity;
+    cam_rot_y -= (mouse_position_get_x() - 256.0f) * cam_sensitivity;
+
+    mouse_position_set(256.0f, 256.0f);
+
+    if (keyboard_is_pressed(GLFW_KEY_W))
+    {
+        cam_x += sinf(cam_rot_y) * cam_speed * cosf(cam_rot_x);
+        cam_y += sinf(cam_rot_x) * cam_speed;
+        cam_z += cosf(cam_rot_y) * cam_speed * cosf(cam_rot_x);
+    }
+
+    if (keyboard_is_pressed(GLFW_KEY_S))
+    {
+        cam_x -= sinf(cam_rot_y) * cam_speed * cosf(cam_rot_x);
+        cam_y -= sinf(cam_rot_x) * cam_speed;
+        cam_z -= cosf(cam_rot_y) * cam_speed * cosf(cam_rot_x);
+    }
+
+    if (keyboard_is_pressed(GLFW_KEY_A))
+    {
+        cam_x += cosf(-cam_rot_y) * cam_speed;
+        cam_z += sinf(-cam_rot_y) * cam_speed;
+    }
+
+    if (keyboard_is_pressed(GLFW_KEY_D))
+    {
+        cam_x -= cosf(-cam_rot_y) * cam_speed;
+        cam_z -= sinf(-cam_rot_y) * cam_speed;
+    }
+
+    if (keyboard_is_pressed(GLFW_KEY_SPACE))
+    {
+        cam_y += cam_speed;
+    }
+
+    if (keyboard_is_pressed(GLFW_KEY_LEFT_SHIFT))
+    {
+        cam_y -= cam_speed;
+    }
+
+    float target_pos_x = cam_x + sinf(cam_rot_y) * cosf(cam_rot_x);
+    float target_pos_y = cam_y + sinf(cam_rot_x);
+    float target_pos_z = cam_z + cosf(cam_rot_y) * cosf(cam_rot_x);
+
+    glUniform3f(cam_pos_location, cam_x, cam_y, cam_z);
+    glUniform3f(target_pos_location, target_pos_x, target_pos_y, target_pos_z);
+    glUniform1f(power_location, power);
+
+    if (keyboard_is_pressed(GLFW_KEY_3))
+    {
+        shadows_on = false;
+    }
+
+    else if (keyboard_is_pressed(GLFW_KEY_4))
+    {
+        shadows_on = true;
+    }
+
+    if (shadows_on)
+    {
+        glUniform1i(shadows_location, 1);
+    }
+
+    else
+    {
+        glUniform1i(shadows_location, 0);
+    }
+
+    if (keyboard_is_pressed(GLFW_KEY_1))
+    {
+        fractal = 0;
+    }
+
+    else if (keyboard_is_pressed(GLFW_KEY_2))
+    {
+        fractal = 1;
+    }
+
+    glUniform1i(fractal_location, fractal);
+
 }
 
 void renderer_prepare()
 {
     GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+
+    load_camera();
 }
 
 void renderer_render()
