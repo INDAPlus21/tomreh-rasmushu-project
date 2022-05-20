@@ -17,12 +17,12 @@ bool game_init(Scene scene)
 {
 	std::cout << "Initializing game" << std::endl;
 
-	initScene(scene);
-
 	if (!Renderer::renderer_init(scene))
 	{
 		return false;
 	}
+
+	initScene(scene);
 
 	return true;
 }

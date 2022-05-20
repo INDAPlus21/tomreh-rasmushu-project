@@ -21,98 +21,6 @@ static void glfwError(int id, const char* description)
     std::cout << description << std::endl;
 }
 
-void Renderer::addToLayout(Layout &layout, GLuint type, uint32_t count, bool normalize = false)
-{
-    struct VertexBufferElement elem = {type, count, normalize};
-
-    layout.elements.push_back(elem);
-    layout.stride += count * VertexBufferElement::GetSizeOfType(type);
-}
-
-void Renderer::createFullscreenQuad(Scene scene)
-{
-    float verts[] = {
-        -1.0f, -1.0f, 0.0f, 0.0f,
-         1.0f, -1.0f, 1.0f, 0.0f,
-         1.0f,  1.0f, 1.0f, 1.0f,
-        -1.0f,  1.0f, 0.0f, 1.0f
-    };
-
-    uint32_t indices[6] = {
-        0, 1, 2,
-        3, 2, 0
-    };
-
-    uint32_t vb;
-    uint32_t ib;
-    uint32_t va;
-    genVertexBuffer(&vb, verts, 16 * sizeof(float));
-    genIndexBuffer(&ib, indices, 6);
-    genVertexArray(&va);
-    uint32_t program = CreateProgram(ppVertShaderSource, ppFragShaderSource);
-
-    Layout layout;
-    addToLayout(layout, GL_FLOAT, 2);
-    addToLayout(layout, GL_FLOAT, 2);
-    configVertexArrayLayout(&va, &vb, layout);
-
-    scene.fsq.vb_handle = vb;
-    scene.fsq.ib_handle = ib;
-    scene.fsq.va_handle = va;   
-    scene.fsq.program_handle = program;
-}
-
-// TODO: make good
-void Renderer::addRenderObject(RenderData &object)
-{
-        float verts[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.5f,  0.5f, 0.0f,
-        -0.5f,  0.5f, 0.0f
-    };
-
-    uint32_t indices[6] = {
-        0, 1, 2,
-        3, 2, 0
-    };
-
-    std::cout << "Here1" << std::endl;
-
-    uint32_t vb;
-    uint32_t ib;
-    uint32_t va;
-    genVertexBuffer(&vb, verts, 3 * 5 * sizeof(float));
-    std::cout << "Here2" << std::endl;
-    genIndexBuffer(&ib, indices, 6);
-    genVertexArray(&va);
-    uint32_t program = CreateProgram(vertexShaderSource, fragmentShaderSource);
-
-
-    Layout layout;
-    addToLayout(layout, GL_FLOAT, 3);
-    configVertexArrayLayout(&va, &vb, layout);
-
-    std::cout << "Here3" << std::endl;
-
-    uint32_t tex;
-    uint32_t rb;
-    uint32_t fb;
-
-    // TODO: borde inte vara fullscreen
-    GenTexture2D(&tex, WINDOW_WIDTH, WINDOW_HEIGHT);
-    GenRenderBuffer(&rb, WINDOW_WIDTH, WINDOW_HEIGHT);
-    GenFrameBuffer(&fb, rb, tex);
-
-    object.vb_handle = vb;
-    object.ib_handle = ib;
-    object.va_handle = va;   
-    object.program_handle = program;
-    object.fb_handle = fb;
-    object.out_tex_handle = tex;
-    std::cout << "Here4" << std::endl;
-}
-
 bool Renderer::renderer_init(Scene scene)
 {
     std::cout << "Initializing renderer" << std::endl;
@@ -202,10 +110,96 @@ void Renderer::renderer_clean_up()
     glfwTerminate();
 }
 
+void Renderer::addToLayout(Layout &layout, GLuint type, uint32_t count, bool normalize = false)
+{
+    struct VertexBufferElement elem = {type, count, normalize};
+
+    layout.elements.push_back(elem);
+    layout.stride += count * VertexBufferElement::GetSizeOfType(type);
+}
+
+void Renderer::createFullscreenQuad(Scene scene)
+{
+    float verts[] = {
+        -1.0f, -1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f
+    };
+
+    uint32_t indices[6] = {
+        0, 1, 2,
+        3, 2, 0
+    };
+
+    uint32_t vb;
+    uint32_t ib;
+    uint32_t va;
+    genVertexBuffer(&vb, verts, 16 * sizeof(float));
+    genIndexBuffer(&ib, indices, 6);
+    genVertexArray(&va);
+    uint32_t program = CreateProgram(ppVertShaderSource, ppFragShaderSource);
+
+    Layout layout;
+    addToLayout(layout, GL_FLOAT, 2);
+    addToLayout(layout, GL_FLOAT, 2);
+    configVertexArrayLayout(&va, &vb, layout);
+
+    scene.fsq.vb_handle = vb;
+    scene.fsq.ib_handle = ib;
+    scene.fsq.va_handle = va;   
+    scene.fsq.program_handle = program;
+}
+
+// TODO: make good
+void Renderer::addRenderObject(RenderData &object)
+{
+    float verts[] = {
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.5f,  0.5f, 0.0f,
+        -0.5f,  0.5f, 0.0f
+    };
+
+    uint32_t indices[6] = {
+        0, 1, 2,
+        3, 2, 0
+    };
+
+    uint32_t vb;
+    uint32_t ib;
+    uint32_t va;
+    genVertexBuffer(&vb, verts, 3 * 5 * sizeof(float));
+    genIndexBuffer(&ib, indices, 6);
+    genVertexArray(&va);
+    uint32_t program = CreateProgram(vertexShaderSource, fragmentShaderSource);
+
+    Layout layout;
+    addToLayout(layout, GL_FLOAT, 3);
+    configVertexArrayLayout(&va, &vb, layout);
+
+    uint32_t tex;
+    uint32_t rb;
+    uint32_t fb;
+
+    // TODO: borde inte vara fullscreen
+    GenTexture2D(&tex, WINDOW_WIDTH, WINDOW_HEIGHT);
+    GenRenderBuffer(&rb, WINDOW_WIDTH, WINDOW_HEIGHT);
+    GenFrameBuffer(&fb, rb, tex);
+
+    object.vb_handle = vb;
+    object.ib_handle = ib;
+    object.va_handle = va;   
+    object.program_handle = program;
+    object.fb_handle = fb;
+    object.out_tex_handle = tex;
+}
+
+
+
 void Renderer::genVertexBuffer(uint32_t *id, const void* data, uint32_t size) 
 {
     glGenBuffers(1, id);
-    std::cout << "Here2" << std::endl;
     GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, *id));
     GL_CALL(glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW));
 }

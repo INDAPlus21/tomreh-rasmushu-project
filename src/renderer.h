@@ -9,6 +9,12 @@
 
 namespace Renderer
 {
+    bool renderer_init(Scene scene);
+    void renderer_prepare();
+    void renderObject(RenderData &object);
+    void renderer_present();
+    void renderer_clean_up();
+
     struct VertexBufferElement
     {
         uint32_t type;
@@ -32,12 +38,6 @@ namespace Renderer
         uint32_t stride;
         std::vector<VertexBufferElement> elements;
     };
-
-    bool renderer_init(Scene scene);
-    void renderer_prepare();
-    void renderObject(RenderData &object);
-    void renderer_present();
-    void renderer_clean_up();
 
     void addRenderObject(RenderData &object);
     void drawToScreen(Scene scene);
