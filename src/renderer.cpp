@@ -21,7 +21,7 @@ static void glfwError(int id, const char* description)
     std::cout << description << std::endl;
 }
 
-bool Renderer::renderer_init(Scene scene)
+bool Renderer::renderer_init(Scene &scene)
 {
     std::cout << "Initializing renderer" << std::endl;
 
@@ -59,7 +59,7 @@ bool Renderer::renderer_init(Scene scene)
         return false;
     }
 
-    GL_CALL(glClearColor(0.3f, 0.7f, 1.0f, 1.0f));
+    GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
@@ -70,11 +70,17 @@ bool Renderer::renderer_init(Scene scene)
 
 void Renderer::renderer_prepare()
 {
-    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 }
 
 void Renderer::renderObject(RenderData &object)
 {
+    // HACK: Move to event handler later
+    if (glfwWindowShouldClose(s_window))
+    {
+        game_close();
+    }
+    
     glBindBuffer(GL_ARRAY_BUFFER, object.vb_handle);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object.ib_handle);
     glBindVertexArray(object.va_handle);
@@ -83,18 +89,18 @@ void Renderer::renderObject(RenderData &object)
 
     // 6 should be object.ib_handle.count()
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, object.out_tex_handle);
 }
 
-void Renderer::drawToScreen(Scene scene)
+void Renderer::drawToScreen(Scene &scene)
 {
     glBindBuffer(GL_ARRAY_BUFFER, scene.fsq.vb_handle);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.fsq.ib_handle);
+    glActiveTexture(GL_TEXTURE0);
+    // For debug
+    glBindTexture(GL_TEXTURE_2D, 1);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glBindVertexArray(scene.fsq.va_handle);
     glUseProgram(scene.fsq.program_handle);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
@@ -169,7 +175,7 @@ void Renderer::addRenderObject(RenderData &object)
     uint32_t vb;
     uint32_t ib;
     uint32_t va;
-    genVertexBuffer(&vb, verts, 3 * 5 * sizeof(float));
+    genVertexBuffer(&vb, verts, 3 * 4 * sizeof(float));
     genIndexBuffer(&ib, indices, 6);
     genVertexArray(&va);
     uint32_t program = CreateProgram(vertexShaderSource, fragmentShaderSource);
@@ -194,8 +200,6 @@ void Renderer::addRenderObject(RenderData &object)
     object.fb_handle = fb;
     object.out_tex_handle = tex;
 }
-
-
 
 void Renderer::genVertexBuffer(uint32_t *id, const void* data, uint32_t size) 
 {

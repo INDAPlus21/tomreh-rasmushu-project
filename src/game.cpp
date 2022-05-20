@@ -6,14 +6,14 @@
 
 static bool s_running = false;
 
-void initScene(Scene scene)
+void initScene(Scene &scene)
 {
 	RenderData obj;
 	Renderer::addRenderObject(obj);
 	scene.render_list.push_back(obj);
 }
 
-bool game_init(Scene scene)
+bool game_init(Scene &scene)
 {
 	std::cout << "Initializing game" << std::endl;
 
@@ -27,16 +27,17 @@ bool game_init(Scene scene)
 	return true;
 }
 
-void game_run(Scene scene)
+void game_run(Scene &scene)
 {
 	std::cout << "Running game" << std::endl;
 
 	s_running = true;
+	Renderer::renderer_prepare();
 
 	while (s_running)
 	{
-		Renderer::renderer_prepare();
-
+		// Something is voodo here
+		std::cout << "Test" << std::endl;
 		for (RenderData data : scene.render_list)
 		{
 			Renderer::renderObject(data);

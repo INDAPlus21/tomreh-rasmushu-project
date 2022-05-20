@@ -9,7 +9,7 @@
 
 namespace Renderer
 {
-    bool renderer_init(Scene scene);
+    bool renderer_init(Scene &scene);
     void renderer_prepare();
     void renderObject(RenderData &object);
     void renderer_present();
@@ -40,7 +40,7 @@ namespace Renderer
     };
 
     void addRenderObject(RenderData &object);
-    void drawToScreen(Scene scene);
+    void drawToScreen(Scene &scene);
 
     void createFullscreenQuad(Scene scene);
     void renderObject(RenderData &object);
