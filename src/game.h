@@ -2,9 +2,7 @@
 #include <vector>
 #include "renderer.h"
 
-std::vector<Renderer::RenderData> renderdata;
-
-bool game_init();
-void game_run();
+bool game_init(Scene scene);
+void game_run(Scene scene);
 void game_close();
 void game_clean_up();

@@ -2,54 +2,56 @@
 
 #define GLEW_STATIC 
 #include <GL/glew.h>
-#include <vector>
-#include <cstdint>
+#include "scene.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
-typedef unsigned int uint;
-
 namespace Renderer
 {
-    struct FullScreenQuad
+    struct VertexBufferElement
     {
-        uint32_t va_handle;
-        uint32_t vb_handle;
-        uint32_t ib_handle;
-        uint32_t program_handle;
+        uint32_t type;
+        uint32_t count;
+        unsigned char normalized;
+
+        static uint32_t GetSizeOfType(uint32_t type)
+        {
+            switch (type)
+            {
+                case GL_FLOAT: return 4;
+                case GL_UNSIGNED_INT: return 4;
+                case GL_UNSIGNED_BYTE: return 1;
+            }
+            return 0;
+        }
     };
 
-    // TODO: add count of ib_handle
-    struct RenderData
+    struct Layout
     {
-        uint32_t va_handle;
-        uint32_t vb_handle;
-        uint32_t ib_handle;
-        uint32_t program_handle;
-        uint32_t fb_handle;
-        uint32_t out_tex_handle;
+        uint32_t stride;
+        std::vector<VertexBufferElement> elements;
     };
 
-    FullScreenQuad fsq;
-
-    bool renderer_init();
+    bool renderer_init(Scene scene);
     void renderer_prepare();
     void renderObject(RenderData &object);
     void renderer_present();
     void renderer_clean_up();
 
     void addRenderObject(RenderData &object);
-    void drawToScreen();
+    void drawToScreen(Scene scene);
 
-    void createFullscreenQuad();
+    void createFullscreenQuad(Scene scene);
     void renderObject(RenderData &object);
-    void genVertexBuffer(uint *id, const void* data, uint size);
+    void genVertexBuffer(uint32_t *id, const void* data, uint32_t size);
     void deleteVetexBuffer(unsigned int *id);
     void genVertexArray(unsigned int *id);
     void deleteVertexArray(unsigned int *id);
     void genIndexBuffer(unsigned int *id, const unsigned int *data, int count);
     void deleteIndexBuffer(unsigned int *id);
+    void configVertexArrayLayout(uint32_t *va, uint32_t *vb, const Layout &layout);
+    void addToLayout(Layout &layout, GLuint type, uint32_t count, bool normalize);
 }
 
 

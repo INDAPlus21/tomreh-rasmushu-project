@@ -6,20 +6,20 @@
 
 static bool s_running = false;
 
-void createRenderObject()
+void initScene(Scene scene)
 {
-	Renderer::RenderData obj;
-	Renderer::addRenderObject(&obj);
-	renderdata.push_back(obj);
+	RenderData obj;
+	Renderer::addRenderObject(obj);
+	scene.render_list.push_back(obj);
 }
 
-bool game_init()
+bool game_init(Scene scene)
 {
 	std::cout << "Initializing game" << std::endl;
 
-	createRenderObject();
+	initScene(scene);
 
-	if (!renderer_init())
+	if (!Renderer::renderer_init(scene))
 	{
 		return false;
 	}
@@ -27,7 +27,7 @@ bool game_init()
 	return true;
 }
 
-void game_run()
+void game_run(Scene scene)
 {
 	std::cout << "Running game" << std::endl;
 
@@ -36,14 +36,14 @@ void game_run()
 	while (s_running)
 	{
 		Renderer::renderer_prepare();
-		Renderer::renderer_present();
 
-		for (Renderer::RenderData data : renderdata)
+		for (RenderData data : scene.render_list)
 		{
-			Renderer::renderObject(&data);
+			Renderer::renderObject(data);
 		}
 
-		Renderer::drawToScreen();
+		Renderer::drawToScreen(scene);
+		Renderer::renderer_present();
 
 		// HACK: Delta time should be calculated correctly
 		std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(16));
@@ -58,5 +58,5 @@ void game_close()
 
 void game_clean_up()
 {
-	renderer_clean_up();
+	Renderer::renderer_clean_up();
 }
