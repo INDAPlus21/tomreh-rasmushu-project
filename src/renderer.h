@@ -34,14 +34,16 @@ namespace Renderer
     };
 
     bool drawToScreen(Scene &scene);
-    void genBuffers(uint32_t *vb, uint32_t *va, const void* data, size_t size, std::vector<uint32_t> &layout);
+    void genBuffers(uint32_t *vb, 
+                    uint32_t *va, 
+                    uint32_t *ib, 
+                    const void* data,
+                    size_t size,
+                    const void* indices,
+                    size_t i_size, 
+                    std::vector<uint32_t> &layout);
+    void deleteBuffers(uint32_t vb, uint32_t va, uint32_t ib);
     void createFullscreenQuad(Scene &scene);
-    void genVertexBuffer(uint32_t *id, const void* data, uint32_t size);
-    void deleteVetexBuffer(unsigned int *id);
-    void genVertexArray(unsigned int *id);
-    void deleteVertexArray(unsigned int *id);
-    void genIndexBuffer(unsigned int *id, const unsigned int *data, int count);
-    void deleteIndexBuffer(unsigned int *id);
 }
 
 

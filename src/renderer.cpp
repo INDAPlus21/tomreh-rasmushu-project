@@ -27,14 +27,21 @@ void Renderer::createFullscreenQuad(Scene &scene)
         -1.0f, -1.0f, 0.0f,
          1.0f, -1.0f, 0.0f,
          1.0f,  1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f
+    };
+
+    uint32_t indices[] = {
+        0, 1, 2,
+        3, 2, 0
     };
 
     std::vector<uint32_t> layout;
     layout.push_back(3);
 
     uint32_t vb;
+    uint32_t ib;
     uint32_t va;
-    genBuffers(&vb, &va, verts, 9 * sizeof(float), layout);
+    genBuffers(&vb, &va, &ib, verts, sizeof(verts), indices, sizeof(indices), layout);
     uint32_t program = CreateProgram(vertexShaderSource, fragmentShaderSource);
 
     scene.fsq.vb_handle = vb;
@@ -42,14 +49,21 @@ void Renderer::createFullscreenQuad(Scene &scene)
     scene.fsq.program_handle = program;
 }
 
-void Renderer::genBuffers(uint32_t *vb, uint32_t *va, const void* data, size_t size, std::vector<uint32_t> &layout)
+void Renderer::genBuffers(uint32_t *vb, uint32_t *va, uint32_t *ib,
+                          const void* data, size_t size,
+                          const void* indices, size_t i_size,
+                          std::vector<uint32_t> &layout)
 {
     glGenBuffers(1, vb);
+    glGenBuffers(1, ib);
     glGenVertexArrays(1, va);
 
     glBindVertexArray(*va);
     glBindBuffer(GL_ARRAY_BUFFER, *vb);
     glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ib);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, i_size, indices, GL_STATIC_DRAW);
     uint32_t offset = 0;
     uint32_t i = 0;
     for (uint32_t elem : layout)
@@ -61,38 +75,11 @@ void Renderer::genBuffers(uint32_t *vb, uint32_t *va, const void* data, size_t s
     }
 }
 
-void Renderer::genVertexBuffer(uint32_t *id, const void* data, uint32_t size) 
+void deleteBuffers(uint32_t *vb, uint32_t *va, uint32_t *ib)
 {
-    glGenBuffers(1, id);
-    glBindBuffer(GL_ARRAY_BUFFER, *id);
-    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
-}
-
-void Renderer::deleteVetexBuffer(uint32_t *id)
-{
-    glDeleteBuffers(GL_ARRAY_BUFFER, id);
-}
-
-void Renderer::genVertexArray(uint32_t *id)
-{
-    glGenVertexArrays(1, id);
-}
-
-void Renderer::deleteVertexArray(uint32_t *id)
-{
-    glDeleteVertexArrays(1, id);
-}
-
-void Renderer::genIndexBuffer(uint32_t *id, const uint32_t *data, int count) 
-{
-    glGenBuffers(1, id);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *id);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(uint32_t), data, GL_STATIC_DRAW);
-}
-
-void Renderer::deleteIndexBuffer(uint32_t *id)
-{
-    glDeleteBuffers(1, id);
+    glDeleteBuffers(1, vb);
+    glDeleteBuffers(1, ib);
+    glDeleteVertexArrays(1, va);
 }
 
 bool Renderer::renderer_init(Scene &scene)
@@ -157,7 +144,7 @@ bool Renderer::drawToScreen(Scene &scene)
 
     glUseProgram(scene.fsq.program_handle);
     glBindVertexArray(scene.fsq.va_handle);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     return true;
 }
 
