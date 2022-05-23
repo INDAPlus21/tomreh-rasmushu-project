@@ -21,32 +21,6 @@ static void glfwError(int id, const char* description)
     std::cout << description << std::endl;
 }
 
-void Renderer::addToLayout(Layout &layout, GLuint type, uint32_t count, bool normalize = false)
-{
-    VertexBufferElement elem = {type, count, normalize};
-
-    layout.elements.push_back(elem);
-    layout.stride += count * VertexBufferElement::GetSizeOfType(type);
-}
-
-void Renderer::configVertexArrayLayout(uint32_t *va, uint32_t *vb, Layout &layout)
-{
-    glBindVertexArray(*va);
-    glBindBuffer(GL_ARRAY_BUFFER, *vb);
-
-    uint32_t offset = 0;
-    for (uint32_t i = 0; i < layout.elements.size(); i++)
-    {
-        glVertexAttribPointer(i, layout.elements[i].count,
-                                 layout.elements[i].type,
-                                 layout.elements[i].normalized,
-                                 layout.stride,
-                                 (void*) offset);
-        glEnableVertexAttribArray(i);
-        offset += layout.elements[i].count * VertexBufferElement::GetSizeOfType(layout.elements[i].type);
-    }
-}
-
 void Renderer::createFullscreenQuad(Scene &scene)
 {
     float verts[] = {
@@ -55,8 +29,8 @@ void Renderer::createFullscreenQuad(Scene &scene)
          1.0f,  1.0f, 0.0f,
     };
 
-    Layout layout;
-    addToLayout(layout, GL_FLOAT, 3);
+    std::vector<uint32_t> layout;
+    layout.push_back(3);
 
     uint32_t vb;
     uint32_t va;
@@ -68,7 +42,7 @@ void Renderer::createFullscreenQuad(Scene &scene)
     scene.fsq.program_handle = program;
 }
 
-void Renderer::genBuffers(uint32_t *vb, uint32_t *va, const void* data, size_t size, Layout &layout)
+void Renderer::genBuffers(uint32_t *vb, uint32_t *va, const void* data, size_t size, std::vector<uint32_t> &layout)
 {
     glGenBuffers(1, vb);
     glGenVertexArrays(1, va);
@@ -76,17 +50,14 @@ void Renderer::genBuffers(uint32_t *vb, uint32_t *va, const void* data, size_t s
     glBindVertexArray(*va);
     glBindBuffer(GL_ARRAY_BUFFER, *vb);
     glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
-    //TODO: Add multiattrib
     uint32_t offset = 0;
-    for (uint32_t i = 0; i < layout.elements.size(); i++)
+    uint32_t i = 0;
+    for (uint32_t elem : layout)
     {
-        glVertexAttribPointer(i, layout.elements[i].count,
-                                 layout.elements[i].type,
-                                 layout.elements[i].normalized,
-                                 layout.stride,
-                                 (void*) offset);
+        glVertexAttribPointer(i, elem, GL_FLOAT, GL_FALSE, 4 * elem, (void*) offset);
         glEnableVertexAttribArray(i);
-        offset += layout.elements[i].count * VertexBufferElement::GetSizeOfType(layout.elements[i].type);
+        offset += elem * 4;
+        i++;
     }
 }
 
