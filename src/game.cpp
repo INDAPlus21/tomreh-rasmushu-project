@@ -8,9 +8,9 @@ static bool s_running = false;
 
 void initScene(Scene &scene)
 {
-	RenderData obj;
-	Renderer::addRenderObject(obj);
-	scene.render_list.push_back(obj);
+	RenderData data;
+	Renderer::initRenderObject(data);
+	scene.render_list.push_back(data);
 }
 
 bool game_init(Scene &scene)
@@ -36,11 +36,10 @@ void game_run(Scene &scene)
 	while (s_running)
 	{
 		Renderer::renderer_prepare();
-		// Something is voodo here
-		// std::cout << "Test" << std::endl;
-		for (uint32_t i = 0; i < scene.render_list.size(); i++)
+
+		for (RenderData data : scene.render_list)
 		{
-			Renderer::renderObject(scene.render_list[i]);
+			Renderer::renderObject(data);
 		}
 
 		if (!Renderer::drawToScreen(scene))
@@ -61,7 +60,7 @@ void game_close()
 	s_running = false;
 }
 
-void game_clean_up()
+void game_clean_up(Scene &scene)
 {
-	Renderer::renderer_clean_up();
+	Renderer::renderer_clean_up(scene);
 }
