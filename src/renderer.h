@@ -40,7 +40,10 @@ namespace Renderer
     };
 
     void addRenderObject(RenderData &object);
-    void drawToScreen(Scene &scene);
+    bool drawToScreen(Scene &scene);
+
+    void addToLayout(Layout &layout, GLuint type, uint32_t count, bool normalize);
+    void configVertexArrayLayout(uint32_t *va, uint32_t *vb, Layout &layout);
 
     void createFullscreenQuad(Scene scene);
     void renderObject(RenderData &object);
@@ -50,8 +53,6 @@ namespace Renderer
     void deleteVertexArray(unsigned int *id);
     void genIndexBuffer(unsigned int *id, const unsigned int *data, int count);
     void deleteIndexBuffer(unsigned int *id);
-    void configVertexArrayLayout(uint32_t *va, uint32_t *vb, const Layout &layout);
-    void addToLayout(Layout &layout, GLuint type, uint32_t count, bool normalize);
 }
 
 

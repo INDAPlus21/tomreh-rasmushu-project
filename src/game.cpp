@@ -32,18 +32,22 @@ void game_run(Scene &scene)
 	std::cout << "Running game" << std::endl;
 
 	s_running = true;
-	Renderer::renderer_prepare();
 
 	while (s_running)
 	{
+		Renderer::renderer_prepare();
 		// Something is voodo here
-		std::cout << "Test" << std::endl;
-		for (RenderData data : scene.render_list)
+		// std::cout << "Test" << std::endl;
+		for (uint32_t i = 0; i < scene.render_list.size(); i++)
 		{
-			Renderer::renderObject(data);
+			Renderer::renderObject(scene.render_list[i]);
 		}
 
-		Renderer::drawToScreen(scene);
+		if (!Renderer::drawToScreen(scene))
+		{
+			s_running = false;
+			game_close();
+		}
 		Renderer::renderer_present();
 
 		// HACK: Delta time should be calculated correctly

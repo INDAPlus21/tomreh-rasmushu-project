@@ -21,107 +21,30 @@ static void glfwError(int id, const char* description)
     std::cout << description << std::endl;
 }
 
-bool Renderer::renderer_init(Scene &scene)
-{
-    std::cout << "Initializing renderer" << std::endl;
-
-    glfwSetErrorCallback(&glfwError);
-
-    if (!glfwInit())
-    {
-        std::cout << "Failed to initialize GLFW" << std::endl;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-    std::cout << "I'm apple machine" << std::endl;
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-    
-    s_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Rayman", NULL, NULL);
-
-
-    if (!s_window)
-    {
-        std::cout << "Window could not be created" << std::endl;
-        glfwTerminate();
-        return false;
-    }
-
-    glfwMakeContextCurrent(s_window);
-
-    glewExperimental = GL_TRUE; 
-    if (glewInit() != GLEW_OK)
-    {
-        std::cout << "Glew could not be initialized" << std::endl;
-        return false;
-    }
-
-    GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-
-    std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
-
-    createFullscreenQuad(scene);
-
-    return true;
-}
-
-void Renderer::renderer_prepare()
-{
-    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-}
-
-void Renderer::renderObject(RenderData &object)
-{
-    // HACK: Move to event handler later
-    if (glfwWindowShouldClose(s_window))
-    {
-        game_close();
-    }
-    
-    glBindBuffer(GL_ARRAY_BUFFER, object.vb_handle);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object.ib_handle);
-    glBindVertexArray(object.va_handle);
-    glUseProgram(object.program_handle);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, object.fb_handle);
-
-    // 6 should be object.ib_handle.count()
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-}
-
-void Renderer::drawToScreen(Scene &scene)
-{
-    glBindBuffer(GL_ARRAY_BUFFER, scene.fsq.vb_handle);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.fsq.ib_handle);
-    glActiveTexture(GL_TEXTURE0);
-    // For debug
-    glBindTexture(GL_TEXTURE_2D, 1);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindVertexArray(scene.fsq.va_handle);
-    glUseProgram(scene.fsq.program_handle);
-
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-}
-
-void Renderer::renderer_present()
-{
-    glfwSwapBuffers(s_window);
-    glfwPollEvents();
-}
-
-void Renderer::renderer_clean_up()
-{
-    glfwTerminate();
-}
-
 void Renderer::addToLayout(Layout &layout, GLuint type, uint32_t count, bool normalize = false)
 {
-    struct VertexBufferElement elem = {type, count, normalize};
+    VertexBufferElement elem = {type, count, normalize};
 
     layout.elements.push_back(elem);
     layout.stride += count * VertexBufferElement::GetSizeOfType(type);
+}
+
+void Renderer::configVertexArrayLayout(uint32_t *va, uint32_t *vb, Layout &layout)
+{
+    glBindVertexArray(*va);
+    glBindBuffer(GL_ARRAY_BUFFER, *vb);
+
+    uint32_t offset = 0;
+    for (uint32_t i = 0; i < layout.elements.size(); i++)
+    {
+        glVertexAttribPointer(i, layout.elements[i].count,
+                                 layout.elements[i].type,
+                                 layout.elements[i].normalized,
+                                 layout.stride,
+                                 (void*) offset);
+        glEnableVertexAttribArray(i);
+        offset += layout.elements[i].count * VertexBufferElement::GetSizeOfType(layout.elements[i].type);
+    }
 }
 
 void Renderer::createFullscreenQuad(Scene scene)
@@ -141,7 +64,7 @@ void Renderer::createFullscreenQuad(Scene scene)
     uint32_t vb;
     uint32_t ib;
     uint32_t va;
-    genVertexBuffer(&vb, verts, 16 * sizeof(float));
+    genVertexBuffer(&vb, verts, 4 * 4 * sizeof(float));
     genIndexBuffer(&ib, indices, 6);
     genVertexArray(&va);
     uint32_t program = CreateProgram(ppVertShaderSource, ppFragShaderSource);
@@ -204,8 +127,8 @@ void Renderer::addRenderObject(RenderData &object)
 void Renderer::genVertexBuffer(uint32_t *id, const void* data, uint32_t size) 
 {
     glGenBuffers(1, id);
-    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, *id));
-    GL_CALL(glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW));
+    glBindBuffer(GL_ARRAY_BUFFER, *id);
+    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
 }
 
 void Renderer::deleteVetexBuffer(uint32_t *id)
@@ -235,21 +158,98 @@ void Renderer::deleteIndexBuffer(uint32_t *id)
     glDeleteBuffers(1, id);
 }
 
-void Renderer::configVertexArrayLayout(uint32_t *va, uint32_t *vb, const Layout &layout)
+bool Renderer::renderer_init(Scene &scene)
 {
-    glBindBuffer(GL_ARRAY_BUFFER, *vb);
-    glBindVertexArray(*va);
+    std::cout << "Initializing renderer" << std::endl;
 
-    uint32_t offset = 0;
-    for (uint32_t i = 0; i < layout.elements.size(); i++)
+    glfwSetErrorCallback(&glfwError);
+
+    if (!glfwInit())
     {
-        glEnableVertexAttribArray(i);
-        glVertexAttribPointer(i, layout.elements[i].count,
-                                 layout.elements[i].type,
-                                 layout.elements[i].normalized,
-                                 layout.stride,
-                                 (const void*) offset);
-        offset += layout.elements[i].count * VertexBufferElement::GetSizeOfType(layout.elements[i].type);
+        std::cout << "Failed to initialize GLFW" << std::endl;
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    std::cout << "I'm apple machine" << std::endl;
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+    
+    s_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Rayman", NULL, NULL);
+
+
+    if (!s_window)
+    {
+        std::cout << "Window could not be created" << std::endl;
+        glfwTerminate();
+        return false;
+    }
+
+    glfwMakeContextCurrent(s_window);
+
+    glewExperimental = GL_TRUE; 
+    if (glewInit() != GLEW_OK)
+    {
+        std::cout << "Glew could not be initialized" << std::endl;
+        return false;
+    }
+
+    GL_CALL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+
+    std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+
+    createFullscreenQuad(scene);
+
+    return true;
+}
+
+void Renderer::renderer_prepare()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void Renderer::renderObject(RenderData &object)
+{
+    glBindVertexArray(object.va_handle);
+    glBindBuffer(GL_ARRAY_BUFFER, object.vb_handle);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object.ib_handle);
+    glUseProgram(object.program_handle);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, object.fb_handle);
+
+    // 6 should be object.ib_handle.count()
+    glDrawArrays(GL_TRIANGLES, 0, 4);
+}
+
+bool Renderer::drawToScreen(Scene &scene)
+{
+        // HACK: Move to event handler later
+    if (glfwWindowShouldClose(s_window))
+    {
+        return false;
     }
     
+    glBindBuffer(GL_ARRAY_BUFFER, scene.fsq.vb_handle);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.fsq.ib_handle);
+    glActiveTexture(GL_TEXTURE0);
+    // For debug
+    glBindTexture(GL_TEXTURE_2D, 1);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindVertexArray(scene.fsq.va_handle);
+    glUseProgram(scene.fsq.program_handle);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    return true;
+}
+
+void Renderer::renderer_present()
+{
+    glfwSwapBuffers(s_window);
+    glfwPollEvents();
+}
+
+void Renderer::renderer_clean_up()
+{
+    glfwTerminate();
 }
