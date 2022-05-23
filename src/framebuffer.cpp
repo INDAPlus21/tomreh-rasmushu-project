@@ -3,19 +3,19 @@
 
 typedef unsigned int uint;
 
-void GenRenderBuffer(uint *id, uint width, uint height)
+void genRenderBuffer(uint *id, uint width, uint height)
 {
     glGenRenderbuffers(1, id);
     glBindRenderbuffer(GL_RENDERBUFFER, *id);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, width, height);
 }
 
-void DeleteRenderBuffer(uint *id)
+void deleteRenderBuffer(uint *id)
 {
     glDeleteRenderbuffers(1, id);
 }
 
-void GenTexture2D(uint *id, uint width, uint height)
+void genTexture2D(uint *id, uint width, uint height)
 {
     glGenTextures(1, id);
     glBindTexture(GL_TEXTURE_2D, *id);
@@ -28,12 +28,12 @@ void GenTexture2D(uint *id, uint width, uint height)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 }
 
-void DeleteTexture2D(uint *id)
+void deleteTexture2D(uint *id)
 {
     glDeleteTextures(1, id);
 }
 
-void GenFrameBuffer(uint *id, const uint rb, const uint tx)
+void genFrameBuffer(uint *id, const uint rb, const uint tx)
 {
     glGenFramebuffers(1, id);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, *id);

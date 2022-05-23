@@ -24,10 +24,10 @@ static void glfwError(int id, const char* description)
 void Renderer::createFullscreenQuad(Scene &scene)
 {
     float verts[] = {
-        -1.0f, -1.0f, 0.0f,
-         1.0f, -1.0f, 0.0f,
-         1.0f,  1.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f
+        -1.0f, -1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f
     };
 
     uint32_t indices[] = {
@@ -36,16 +36,18 @@ void Renderer::createFullscreenQuad(Scene &scene)
     };
 
     std::vector<uint32_t> layout;
-    layout.push_back(3);
+    // Maybe error?
+    layout.push_back(2);
+    layout.push_back(2);
 
     uint32_t vb;
     uint32_t ib;
     uint32_t va;
     genBuffers(&vb, &va, &ib, verts, sizeof(verts), indices, sizeof(indices), layout);
-    uint32_t program = CreateProgram(vertexShaderSource, fragmentShaderSource);
+    uint32_t program = CreateProgram(ppVertShaderSource, ppFragShaderSource);
 
     scene.fsq.vb_handle = vb;
-    scene.fsq.va_handle = va;   
+    scene.fsq.va_handle = va;
     scene.fsq.program_handle = program;
 }
 
@@ -75,11 +77,51 @@ void Renderer::genBuffers(uint32_t *vb, uint32_t *va, uint32_t *ib,
     }
 }
 
-void deleteBuffers(uint32_t *vb, uint32_t *va, uint32_t *ib)
+void Renderer::deleteBuffers(uint32_t *vb, uint32_t *va, uint32_t *ib)
 {
     glDeleteBuffers(1, vb);
     glDeleteBuffers(1, ib);
     glDeleteVertexArrays(1, va);
+}
+
+void Renderer::initRenderObject(RenderData &object)
+{
+    float verts[] = {
+        -1.0f, -1.0f, 0.0f,
+         1.0f, -1.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f
+    };
+
+    uint32_t indices[] = {
+        0, 1, 2,
+        3, 2, 0
+    };
+
+    std::vector<uint32_t> layout;
+    layout.push_back(3);
+
+    uint32_t vb;
+    uint32_t ib;
+    uint32_t va;
+    genBuffers(&vb, &va, &ib, verts, sizeof(verts), indices, sizeof(indices), layout);
+    uint32_t program = CreateProgram(vertexShaderSource, fragmentShaderSource);
+
+    uint32_t tex;
+    uint32_t rb;
+    uint32_t fb;
+
+    // TODO: borde inte vara fullscreen
+    genTexture2D(&tex, WINDOW_WIDTH, WINDOW_HEIGHT);
+    genRenderBuffer(&rb, WINDOW_WIDTH, WINDOW_HEIGHT);
+    genFrameBuffer(&fb, rb, tex);
+
+    object.vb_handle = vb;
+    object.ib_handle = ib;
+    object.va_handle = va;   
+    object.program_handle = program;
+    object.fb_handle = fb;
+    object.out_tex_handle = tex;
 }
 
 bool Renderer::renderer_init(Scene &scene)
@@ -121,6 +163,8 @@ bool Renderer::renderer_init(Scene &scene)
     }
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
 
@@ -131,6 +175,17 @@ bool Renderer::renderer_init(Scene &scene)
 
 void Renderer::renderer_prepare()
 {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void Renderer::renderObject(RenderData &object)
+{
+    glEnable(GL_DEPTH_TEST);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, object.fb_handle);
+    glUseProgram(object.program_handle);
+    glBindVertexArray(object.va_handle);
+    // TODO: 6 should be ib.count ish
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -142,6 +197,12 @@ bool Renderer::drawToScreen(Scene &scene)
         return false;
     }
 
+    glDisable(GL_DEPTH_TEST);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glActiveTexture(GL_TEXTURE0);
+    //TODO: make 1 not fixed
+    glBindTexture(GL_TEXTURE_2D, 1);
     glUseProgram(scene.fsq.program_handle);
     glBindVertexArray(scene.fsq.va_handle);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -154,7 +215,13 @@ void Renderer::renderer_present()
     glfwPollEvents();
 }
 
-void Renderer::renderer_clean_up()
+void Renderer::renderer_clean_up(Scene &scene)
 {
+    for (RenderData data : scene.render_list)
+    {
+        deleteBuffers(&data.vb_handle, &data.va_handle, &data.ib_handle);
+    }
+
+    deleteBuffers(&scene.fsq.vb_handle, &scene.fsq.va_handle, &scene.fsq.ib_handle);
     glfwTerminate();
 }

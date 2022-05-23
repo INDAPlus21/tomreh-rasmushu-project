@@ -13,7 +13,7 @@ int main()
     }
 
     game_run(scene);
-    game_clean_up();
+    game_clean_up(scene);
 
     return 0;
 }
