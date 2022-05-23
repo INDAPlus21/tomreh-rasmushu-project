@@ -39,14 +39,12 @@ namespace Renderer
         std::vector<VertexBufferElement> elements;
     };
 
-    void addRenderObject(RenderData &object);
     bool drawToScreen(Scene &scene);
 
     void addToLayout(Layout &layout, GLuint type, uint32_t count, bool normalize);
     void configVertexArrayLayout(uint32_t *va, uint32_t *vb, Layout &layout);
 
-    void createFullscreenQuad(Scene scene);
-    void renderObject(RenderData &object);
+    void createFullscreenQuad(Scene &scene);
     void genVertexBuffer(uint32_t *id, const void* data, uint32_t size);
     void deleteVetexBuffer(unsigned int *id);
     void genVertexArray(unsigned int *id);
