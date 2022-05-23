@@ -44,6 +44,7 @@ namespace Renderer
     void addToLayout(Layout &layout, GLuint type, uint32_t count, bool normalize);
     void configVertexArrayLayout(uint32_t *va, uint32_t *vb, Layout &layout);
 
+    void genBuffers(uint32_t *vb, uint32_t *va, const void* data, size_t size, Layout &layout);
     void createFullscreenQuad(Scene &scene);
     void genVertexBuffer(uint32_t *id, const void* data, uint32_t size);
     void deleteVetexBuffer(unsigned int *id);

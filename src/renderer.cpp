@@ -55,21 +55,39 @@ void Renderer::createFullscreenQuad(Scene &scene)
          1.0f,  1.0f, 0.0f,
     };
 
+    Layout layout;
+    addToLayout(layout, GL_FLOAT, 3);
+
     uint32_t vb;
     uint32_t va;
-    glGenBuffers(1, &vb);
-    genVertexArray(&va);
+    genBuffers(&vb, &va, verts, 9 * sizeof(float), layout);
     uint32_t program = CreateProgram(vertexShaderSource, fragmentShaderSource);
-
-    glBindVertexArray(va);
-    glBindBuffer(GL_ARRAY_BUFFER, vb);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
 
     scene.fsq.vb_handle = vb;
     scene.fsq.va_handle = va;   
     scene.fsq.program_handle = program;
+}
+
+void Renderer::genBuffers(uint32_t *vb, uint32_t *va, const void* data, size_t size, Layout &layout)
+{
+    glGenBuffers(1, vb);
+    glGenVertexArrays(1, va);
+
+    glBindVertexArray(*va);
+    glBindBuffer(GL_ARRAY_BUFFER, *vb);
+    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+    //TODO: Add multiattrib
+    uint32_t offset = 0;
+    for (uint32_t i = 0; i < layout.elements.size(); i++)
+    {
+        glVertexAttribPointer(i, layout.elements[i].count,
+                                 layout.elements[i].type,
+                                 layout.elements[i].normalized,
+                                 layout.stride,
+                                 (void*) offset);
+        glEnableVertexAttribArray(i);
+        offset += layout.elements[i].count * VertexBufferElement::GetSizeOfType(layout.elements[i].type);
+    }
 }
 
 void Renderer::genVertexBuffer(uint32_t *id, const void* data, uint32_t size) 
@@ -156,7 +174,6 @@ bool Renderer::renderer_init(Scene &scene)
 void Renderer::renderer_prepare()
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    std::cout << "Clearing" << std::endl;
 }
 
 bool Renderer::drawToScreen(Scene &scene)
@@ -170,7 +187,6 @@ bool Renderer::drawToScreen(Scene &scene)
     glUseProgram(scene.fsq.program_handle);
     glBindVertexArray(scene.fsq.va_handle);
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    std::cout << "Drawing done!" << std::endl;
     return true;
 }
 
@@ -178,8 +194,6 @@ void Renderer::renderer_present()
 {
     glfwSwapBuffers(s_window);
     glfwPollEvents();
-
-    std::cout << "Presenting" << std::endl;
 }
 
 void Renderer::renderer_clean_up()
