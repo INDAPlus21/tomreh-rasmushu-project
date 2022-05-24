@@ -1,42 +1,39 @@
 #include "framebuffer.h"
 #include "renderer.h"
+#include <iostream>
 
-typedef unsigned int uint;
-
-void genRenderBuffer(uint *id, uint width, uint height)
+void genFrameBuffer(uint32_t *fb, uint32_t *rb, uint32_t *tx, uint32_t width, uint32_t height)
 {
-    glGenRenderbuffers(1, id);
-    glBindRenderbuffer(GL_RENDERBUFFER, *id);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, width, height);
-}
+    glGenFramebuffers(1, fb);
+    glBindFramebuffer(GL_FRAMEBUFFER, *fb);
 
-void deleteRenderBuffer(uint *id)
-{
-    glDeleteRenderbuffers(1, id);
-}
+    glGenTextures(1, tx);
+    glBindTexture(GL_TEXTURE_2D, *tx);
 
-void genTexture2D(uint *id, uint width, uint height)
-{
-    glGenTextures(1, id);
-    glBindTexture(GL_TEXTURE_2D, *id);
-
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tx, 0);
+
+    glGenRenderbuffers(1, rb);
+    glBindRenderbuffer(GL_RENDERBUFFER, *rb);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, *rb);
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+	    std::cout << "Framebuffer is not complete!" << std::endl;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void deleteTexture2D(uint *id)
+void deleteFrameBuffer(uint32_t *fb, uint32_t *rb, uint32_t *tx)
 {
-    glDeleteTextures(1, id);
-}
-
-void genFrameBuffer(uint *id, const uint rb, const uint tx)
-{
-    glGenFramebuffers(1, id);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, *id);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tx, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rb);
+    glDeleteFramebuffers(1, fb);
+    glDeleteRenderbuffers(1, rb);
+    glDeleteTextures(1, tx);
 }

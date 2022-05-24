@@ -17,7 +17,7 @@ bool game_init(Scene &scene)
 {
 	std::cout << "Initializing game" << std::endl;
 
-	if (!Renderer::renderer_init(scene))
+	if (!Renderer::init(scene))
 	{
 		return false;
 	}
@@ -35,17 +35,9 @@ void game_run(Scene &scene)
 
 	while (s_running)
 	{
-		Renderer::renderer_prepare();
-
-		for (RenderData data : scene.render_list)
-		{
-			Renderer::renderObject(data);
-		}
-
-		if (!Renderer::drawToScreen(scene))
+		if (!Renderer::render(scene))
 		{
 			s_running = false;
-			game_close();
 		}
 		Renderer::renderer_present();
 
