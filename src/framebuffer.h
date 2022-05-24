@@ -1,7 +1,5 @@
 #pragma once
+#include <cinttypes>
 
-void genRenderBuffer(unsigned int *id, unsigned int width, unsigned int height);
-void deleteRenderBuffer(unsigned int *id);
-void genTexture2D(unsigned int *id, unsigned int width, unsigned int height);
-void deleteTexture2D(unsigned int *id);
-void genFrameBuffer(unsigned int *id, const unsigned int rb, const unsigned int tx);
+void genFrameBuffer(uint32_t *fb, uint32_t *rb, uint32_t *tx, uint32_t width, uint32_t height);
+void deleteFrameBuffer(uint32_t *fb, uint32_t *rb, uint32_t *tx);
