@@ -22,8 +22,15 @@ struct RenderData
     uint32_t out_tex_handle;
 };
 
+struct FractalData
+{
+    int fractal_id;
+    float fractal_power;
+};
+
 struct Scene
 {
     std::vector<RenderData> render_list;
+    std::vector<FractalData> fractal_list;
     FullScreenQuad fsq;
 };
