@@ -13,6 +13,8 @@ const char *vertexShaderSource = "res/shaders/vertex.vert";
 const char *fragmentShaderSource = "res/shaders/fragment.frag";
 const char *ppFragShaderSource = "res/shaders/pp.frag";
 const char *ppVertShaderSource = "res/shaders/pp.vert";
+const char *fractalFragShaderSource = "res/shaders/fractal.frag";
+const char *fractalVertShaderSource = "res/shaders/fractal.vert";
 
 static GLFWwindow* s_window = nullptr;
 
@@ -41,7 +43,7 @@ void Renderer::createFullscreenQuad(Scene &scene)
     uint32_t vb;
     uint32_t va;
     genBuffers(&vb, &va, verts, sizeof(verts), layout);
-    uint32_t program = CreateProgram(ppVertShaderSource, ppFragShaderSource);
+    uint32_t program = createProgram(ppVertShaderSource, ppFragShaderSource);
 
     scene.fsq.vb_handle = vb;
     scene.fsq.va_handle = va;
@@ -96,7 +98,7 @@ void Renderer::initRenderObject(RenderData &object)
     uint32_t vb;
     uint32_t va;
     genBuffers(&vb, &va, verts, sizeof(verts), layout);
-    uint32_t program = CreateProgram(vertexShaderSource, fragmentShaderSource);
+    uint32_t program = createProgram(vertexShaderSource, fragmentShaderSource);
 
     uint32_t tx;
     uint32_t rb;
@@ -113,6 +115,24 @@ void Renderer::initRenderObject(RenderData &object)
 
 void Renderer::initFractalObject(FractalData &object)
 {
+    float verts[] = {
+        -1.0f,  1.0f,  0.0f,
+        -1.0f, -1.0f,  0.0f,
+         1.0f, -1.0f,  0.0f,
+
+        -1.0f,  1.0f,  0.0f,
+         1.0f, -1.0f,  0.0f,
+         1.0f,  1.0f,  0.0f,
+    };
+
+    std::vector<uint32_t> layout;
+    layout.push_back(3);
+
+    uint32_t vb;
+    uint32_t va;
+    genBuffers(&vb, &va, verts, sizeof(verts), layout);
+    uint32_t program = createProgram(fractalVertShaderSource, fractalFragShaderSource);
+
     uint32_t tx;
     uint32_t rb;
     uint32_t fb;
@@ -120,7 +140,12 @@ void Renderer::initFractalObject(FractalData &object)
     genFrameBuffer(&fb, &rb, &tx, WINDOW_WIDTH, WINDOW_HEIGHT);
     
     object.fractal_id = 1;
-    object.fractal_power =  
+    object.fractal_power = 5.8f;
+    object.vb_handle = vb;
+    object.va_handle = va;
+    object.fb_handle = fb;
+    object.out_tex_handle = tx;
+    object.program_handle = program;
 }
 
 bool Renderer::init(Scene &scene)
@@ -137,10 +162,10 @@ bool Renderer::init(Scene &scene)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-    std::cout << "I'm apple machine" << std::endl;
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+    #ifdef __APPLE__
+        std::cout << "I'm apple machine" << std::endl;
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
     
     s_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Rayman", NULL, NULL);
 
@@ -207,15 +232,51 @@ bool Renderer::render(Scene &scene)
     return true;
 }
 
-bool renderFractal(Scene &scene)
+bool Renderer::renderFractal(Scene &scene)
 {
     if (glfwWindowShouldClose(s_window))
     {
         return false;
     }
 
+    //TODO: make this not so bad
+    FractalData obj = scene.fractal_list.at(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, obj.fb_handle);
+    glEnable(GL_DEPTH_TEST);
 
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    //TODO: Add inputs
+    addFloatUniform(obj.program_handle, "u_FractalPower", 1, &obj.fractal_power);
+    float aspect_ratio = WINDOW_WIDTH / WINDOW_HEIGHT;
+    addFloatUniform(obj.program_handle, "u_AspectRatio", 1, &aspect_ratio);
+    float camera_vals[] = {-3.0f, 0.5f, -0.5f};
+    addFloatUniform(obj.program_handle, "u_CameraPosition", 3, camera_vals);
+    float target_vals[] = {0.0f, 0.0f, 0.0f};
+    addFloatUniform(obj.program_handle, "u_TargetPosition", 3, target_vals);
+
+    int shadows = 0;
+    addIntUniform(obj.program_handle, "u_FractalId", 1, &shadows);
+    addIntUniform(obj.program_handle, "u_FractalId", 1, &obj.fractal_id);
+
+    glUseProgram(obj.program_handle);
+    glBindVertexArray(obj.va_handle);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+
+    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(scene.fsq.program_handle);
+    glBindVertexArray(scene.fsq.va_handle);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, obj.out_tex_handle);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
     return true;
 }
 

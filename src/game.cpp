@@ -8,12 +8,13 @@ static bool s_running = false;
 
 void initScene(Scene &scene)
 {
-	RenderData data;
-	Renderer::initRenderObject(data);
-	scene.render_list.push_back(data);
+	RenderData r_data;
+	Renderer::initRenderObject(r_data);
+	scene.render_list.push_back(r_data);
 
-	FractalData;
-	
+	FractalData f_data;
+	Renderer::initFractalObject(f_data);
+	scene.fractal_list.push_back(f_data);
 }
 
 bool game_init(Scene &scene)
@@ -38,10 +39,16 @@ void game_run(Scene &scene)
 
 	while (s_running)
 	{
-		if (!Renderer::render(scene))
+		//if (!Renderer::render(scene))
+		//{
+		//	s_running = false;
+		//}
+
+		if (!Renderer::renderFractal(scene))
 		{
 			s_running = false;
 		}
+		
 		Renderer::renderer_present();
 
 		// HACK: Delta time should be calculated correctly

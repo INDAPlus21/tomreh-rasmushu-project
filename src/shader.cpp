@@ -5,7 +5,7 @@
 #include <fstream>
 #include <vector>
 
-std::string ReadFile(const char *path)
+std::string readFile(const char *path)
 {
     std::string content;
     std::ifstream fileStream(path, std::ios::in);
@@ -27,13 +27,13 @@ std::string ReadFile(const char *path)
     return content;
 }
 
-GLuint CreateProgram(const char* VertexPath, const char* FragPath)
+GLuint createProgram(const char* VertexPath, const char* FragPath)
 {
     GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    std::string vertShaderStr = ReadFile(VertexPath);
-    std::string fragShaderStr = ReadFile(FragPath);
+    std::string vertShaderStr = readFile(VertexPath);
+    std::string fragShaderStr = readFile(FragPath);
     const char *vertShaderSrc = vertShaderStr.c_str();
     const char *fragShaderSrc = fragShaderStr.c_str();
 
@@ -78,15 +78,14 @@ GLuint CreateProgram(const char* VertexPath, const char* FragPath)
     return program;
 }
 
-void DeleteProgram(GLuint *id)
+void deleteProgram(GLuint *id)
 {
     glDeleteProgram(*id);
 }
 
 void addFloatUniform(uint32_t program, const char* name, uint32_t num, float* vals)
 {
-    assert(num == sizeof(*vals) / sizeof(float) && "Not correct size of values");
-
+    //TODO: Add size check
     glUseProgram(program);
     int location = glGetUniformLocation(program, name);
     switch (num)
@@ -107,10 +106,9 @@ void addFloatUniform(uint32_t program, const char* name, uint32_t num, float* va
     glUseProgram(0);
 }
 
-void addIntUniform(uint32_t program, const char* name, uint32_t num, uint32_t* vals)
+void addIntUniform(uint32_t program, const char* name, uint32_t num, int* vals)
 {
-    assert(num == sizeof(*vals) / sizeof(uint32_t) && "Not correct size of values");
-
+    //TODO: Add size check
     glUseProgram(program);
     int location = glGetUniformLocation(program, name);
     switch (num)

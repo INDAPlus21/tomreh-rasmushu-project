@@ -4,8 +4,8 @@
 #include <GL/glew.h>
 #include "scene.h"
 
-#define WINDOW_WIDTH 600
-#define WINDOW_HEIGHT 600
+#define WINDOW_WIDTH 1240
+#define WINDOW_HEIGHT 720
 
 namespace Renderer
 {
