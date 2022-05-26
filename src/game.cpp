@@ -11,6 +11,9 @@ void initScene(Scene &scene)
 	RenderData data;
 	Renderer::initRenderObject(data);
 	scene.render_list.push_back(data);
+
+	FractalData;
+	
 }
 
 bool game_init(Scene &scene)

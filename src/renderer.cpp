@@ -111,6 +111,18 @@ void Renderer::initRenderObject(RenderData &object)
     object.out_tex_handle = tx;
 }
 
+void Renderer::initFractalObject(FractalData &object)
+{
+    uint32_t tx;
+    uint32_t rb;
+    uint32_t fb;
+
+    genFrameBuffer(&fb, &rb, &tx, WINDOW_WIDTH, WINDOW_HEIGHT);
+    
+    object.fractal_id = 1;
+    object.fractal_power =  
+}
+
 bool Renderer::init(Scene &scene)
 {
     std::cout << "Initializing renderer" << std::endl;
@@ -192,6 +204,18 @@ bool Renderer::render(Scene &scene)
     glBindTexture(GL_TEXTURE_2D, obj.out_tex_handle);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    return true;
+}
+
+bool renderFractal(Scene &scene)
+{
+    if (glfwWindowShouldClose(s_window))
+    {
+        return false;
+    }
+
+
+
     return true;
 }
 

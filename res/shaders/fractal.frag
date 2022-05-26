@@ -175,7 +175,7 @@ float safe_distance(vec3 point)
 
     if (u_FractalId == 1)
     {
-    sd = min (sd, point_fractal_distance(point));
+        sd = min (sd, point_fractal_distance(point));
     }
     
     else

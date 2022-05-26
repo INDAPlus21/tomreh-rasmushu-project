@@ -26,6 +26,9 @@ struct FractalData
 {
     int fractal_id;
     float fractal_power;
+    uint32_t program_handle;
+    uint32_t fb_handle;
+    uint32_t out_tex_handle;
 };
 
 struct Scene

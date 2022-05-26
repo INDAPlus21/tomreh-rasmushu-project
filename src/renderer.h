@@ -17,9 +17,11 @@ namespace Renderer
     void deleteBuffers(uint32_t *vb, uint32_t *va);
     void createFullscreenQuad(Scene &scene);
     void initRenderObject(RenderData &object);
+    void initFractalObject(FractalData &object);
 
     bool init(Scene &scene);
     bool render(Scene &scene);
+    bool renderFractal(Scene &scene);
     void renderer_present();
     void renderer_clean_up(Scene &scene);
 }
