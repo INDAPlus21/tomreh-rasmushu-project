@@ -5,13 +5,17 @@
 #include "exceptions.h"
 
 #include "shader.h"
-#include "game.h"
+#include "framebuffer.h"
 
-#define WINDOW_WIDTH 1280
-#define WINDOW_HEIGHT 720
+using namespace Renderer;
 
 const char *vertexShaderSource = "res/shaders/vertex.vert";
 const char *fragmentShaderSource = "res/shaders/fragment.frag";
+const char *ppFragShaderSource = "res/shaders/pp.frag";
+const char *ppVertShaderSource = "res/shaders/pp.vert";
+const char *fractalFragShaderSource = "res/shaders/fractal.frag";
+const char *fractalVertShaderSource = "res/shaders/fractal.vert";
+
 static GLFWwindow* s_window = nullptr;
 
 static void glfwError(int id, const char* description)
@@ -19,7 +23,132 @@ static void glfwError(int id, const char* description)
     std::cout << description << std::endl;
 }
 
-bool renderer_init()
+void Renderer::createFullscreenQuad(Scene &scene)
+{
+    float verts[] = {
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+
+        -1.0f,  1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f
+    };
+
+    std::vector<uint32_t> layout;
+    // Maybe error?
+    layout.push_back(2);
+    layout.push_back(2);
+
+    uint32_t vb;
+    uint32_t va;
+    genBuffers(&vb, &va, verts, sizeof(verts), layout);
+    uint32_t program = createProgram(ppVertShaderSource, ppFragShaderSource);
+
+    scene.fsq.vb_handle = vb;
+    scene.fsq.va_handle = va;
+    scene.fsq.program_handle = program;
+}
+
+void Renderer::genBuffers(uint32_t *vb, uint32_t *va,
+                          const void* data, size_t size,
+                          std::vector<uint32_t> &layout)
+{
+    glGenBuffers(1, vb);
+    glGenVertexArrays(1, va);
+
+    glBindVertexArray(*va);
+    glBindBuffer(GL_ARRAY_BUFFER, *vb);
+    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+
+    uint32_t sum = 0;
+    for (uint32_t val : layout)
+    {
+        sum += val;
+    }
+
+    uint32_t offset = 0;
+    uint32_t i = 0;
+    for (uint32_t elem : layout)
+    {
+        glEnableVertexAttribArray(i);
+        glVertexAttribPointer(i, elem, GL_FLOAT, GL_FALSE, 4 * sum, (void*) offset);
+        offset += elem * 4;
+        i++;
+    }
+}
+
+void Renderer::deleteBuffers(uint32_t *vb, uint32_t *va)
+{
+    glDeleteBuffers(1, vb);
+    glDeleteVertexArrays(1, va);
+}
+
+void Renderer::initRenderObject(RenderData &object)
+{
+    float verts[] = {
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f,
+         0.5f,  0.5f, 0.0f,
+    };
+
+    std::vector<uint32_t> layout;
+    layout.push_back(3);
+
+    uint32_t vb;
+    uint32_t va;
+    genBuffers(&vb, &va, verts, sizeof(verts), layout);
+    uint32_t program = createProgram(vertexShaderSource, fragmentShaderSource);
+
+    uint32_t tx;
+    uint32_t rb;
+    uint32_t fb;
+
+    genFrameBuffer(&fb, &rb, &tx, WINDOW_WIDTH, WINDOW_HEIGHT);
+    
+    object.vb_handle = vb;
+    object.va_handle = va;   
+    object.program_handle = program;
+    object.fb_handle = fb;
+    object.out_tex_handle = tx;
+}
+
+void Renderer::initFractalObject(FractalData &object)
+{
+    float verts[] = {
+        -1.0f,  1.0f,  0.0f,
+        -1.0f, -1.0f,  0.0f,
+         1.0f, -1.0f,  0.0f,
+
+        -1.0f,  1.0f,  0.0f,
+         1.0f, -1.0f,  0.0f,
+         1.0f,  1.0f,  0.0f,
+    };
+
+    std::vector<uint32_t> layout;
+    layout.push_back(3);
+
+    uint32_t vb;
+    uint32_t va;
+    genBuffers(&vb, &va, verts, sizeof(verts), layout);
+    uint32_t program = createProgram(fractalVertShaderSource, fractalFragShaderSource);
+
+    uint32_t tx;
+    uint32_t rb;
+    uint32_t fb;
+
+    genFrameBuffer(&fb, &rb, &tx, WINDOW_WIDTH, WINDOW_HEIGHT);
+    
+    object.fractal_id = 1;
+    object.fractal_power = 5.8f;
+    object.vb_handle = vb;
+    object.va_handle = va;
+    object.fb_handle = fb;
+    object.out_tex_handle = tx;
+    object.program_handle = program;
+}
+
+bool Renderer::init(Scene &scene)
 {
     std::cout << "Initializing renderer" << std::endl;
 
@@ -33,10 +162,10 @@ bool renderer_init()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-    std::cout << "I'm apple machine" << std::endl;
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+    #ifdef __APPLE__
+        std::cout << "I'm apple machine" << std::endl;
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
     
     s_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Rayman", NULL, NULL);
 
@@ -57,127 +186,113 @@ bool renderer_init()
         return false;
     }
 
-    GL_CALL(glClearColor(0.3f, 0.7f, 1.0f, 1.0f));
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+
+    createFullscreenQuad(scene);
 
     return true;
 }
 
-void CreateThings() 
+bool Renderer::render(Scene &scene)
 {
-    unsigned int va;
-    unsigned int vb;
-    unsigned int ib;
-
-    float verts[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.5f,  0.5f, 0.0f,
-        -0.5f,  0.5f, 0.0f
-    };
-
-    unsigned int indices[6] = {
-        0, 1, 2,
-        3, 2, 0
-    };
-
-    Layout layout = {0, std::vector<VertexBufferElement>()};
-    GenVertexArray(&va);
-    GenVertexBuffer(&vb, verts, 4 * 3 * sizeof(float));
-    AddToLayout(layout, GL_FLOAT, 3);
-    ConfigVertexArrayLayout(&va, &vb, layout);
-
-    GenIndexBuffer(&ib, indices, 6);
-
-    GLuint program = CreateProgram(vertexShaderSource, fragmentShaderSource);
-    glUseProgram(program);
-}
-
-void renderer_prepare()
-{
-    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-}
-
-void renderer_render()
-{
-    // HACK: Move to event handler later
     if (glfwWindowShouldClose(s_window))
     {
-        game_close();
+        return false;
     }
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    //TODO: Add multi object funtionallity
+    RenderData obj = scene.render_list.at(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, obj.fb_handle);
+    glEnable(GL_DEPTH_TEST);
+
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(obj.program_handle);
+
+    glBindVertexArray(obj.va_handle);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindVertexArray(0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+
+    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(scene.fsq.program_handle);
+    glBindVertexArray(scene.fsq.va_handle);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, obj.out_tex_handle);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    return true;
 }
 
-void renderer_present()
+bool Renderer::renderFractal(Scene &scene)
+{
+    if (glfwWindowShouldClose(s_window))
+    {
+        return false;
+    }
+
+    //TODO: make this not so bad
+    FractalData obj = scene.fractal_list.at(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, obj.fb_handle);
+    glEnable(GL_DEPTH_TEST);
+
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //TODO: Add inputs
+    addFloatUniform(obj.program_handle, "u_FractalPower", 1, &obj.fractal_power);
+    float aspect_ratio = WINDOW_WIDTH / WINDOW_HEIGHT;
+    addFloatUniform(obj.program_handle, "u_AspectRatio", 1, &aspect_ratio);
+    float camera_vals[] = {-3.0f, 0.5f, -0.5f};
+    addFloatUniform(obj.program_handle, "u_CameraPosition", 3, camera_vals);
+    float target_vals[] = {0.0f, 0.0f, 0.0f};
+    addFloatUniform(obj.program_handle, "u_TargetPosition", 3, target_vals);
+
+    int shadows = 0;
+    addIntUniform(obj.program_handle, "u_FractalId", 1, &shadows);
+    addIntUniform(obj.program_handle, "u_FractalId", 1, &obj.fractal_id);
+
+    glUseProgram(obj.program_handle);
+    glBindVertexArray(obj.va_handle);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+
+    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(scene.fsq.program_handle);
+    glBindVertexArray(scene.fsq.va_handle);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, obj.out_tex_handle);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    return true;
+}
+
+void Renderer::renderer_present()
 {
     glfwSwapBuffers(s_window);
     glfwPollEvents();
 }
 
-void renderer_clean_up()
+void Renderer::renderer_clean_up(Scene &scene)
 {
-    glfwTerminate();
-}
-
-void GenVertexBuffer(unsigned int *id, const void* data, unsigned int size) 
-{
-    glGenBuffers(1, id);
-    glBindBuffer(GL_ARRAY_BUFFER, *id);
-    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
-}
-
-void DeleteVetexBuffer(unsigned int *id)
-{
-    glDeleteBuffers(GL_ARRAY_BUFFER, id);
-}
-
-void GenVertexArray(unsigned int *id)
-{
-    glGenVertexArrays(1, id);
-}
-
-void DeleteVertexArray(unsigned int *id)
-{
-    glDeleteVertexArrays(1, id);
-}
-
-void GenIndexBuffer(unsigned int *id, const unsigned int *data, int count) 
-{
-    glGenBuffers(1, id);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *id);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(unsigned int), data, GL_STATIC_DRAW);
-}
-
-void DeleteIndexBuffer(unsigned int *id)
-{
-    glDeleteBuffers(1, id);
-}
-
-void ConfigVertexArrayLayout(unsigned int *va, unsigned int *vb, const Layout &layout)
-{
-    glBindBuffer(GL_ARRAY_BUFFER, *vb);
-    glBindVertexArray(*va);
-
-    unsigned int offset = 0;
-    for (unsigned int i = 0; i < layout.elements.size(); i++)
+    for (RenderData data : scene.render_list)
     {
-        glEnableVertexAttribArray(i);
-        glVertexAttribPointer(i, layout.elements[i].count,
-                                 layout.elements[i].type,
-                                 layout.elements[i].normalized,
-                                 layout.stride,
-                                 (const void*) offset);
-        offset += layout.elements[i].count * VertexBufferElement::GetSizeOfType(layout.elements[i].type);
+        deleteBuffers(&data.vb_handle, &data.va_handle);
     }
-    
-}
 
-void AddToLayout(Layout &layout, GLuint type, unsigned int count, bool normalize)
-{
-    struct VertexBufferElement elem = {type, count, normalize};
-
-    layout.elements.push_back(elem);
-    layout.stride += count * VertexBufferElement::GetSizeOfType(type);
+    deleteBuffers(&scene.fsq.vb_handle, &scene.fsq.va_handle);
+    glfwTerminate();
 }

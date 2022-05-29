@@ -20,6 +20,7 @@ workspace "tomreh-rasmushu-project"
 project "Rayman"
    kind "ConsoleApp"
    language "C++"
+   cppdialect "c++17"
    targetdir "bin/%{cfg.buildcfg}/%{cfg.system}/%{cfg.architecture}"
 
    files { "./src/**.h", "./src/**.cpp" }

@@ -2,16 +2,18 @@
 
 #include "game.h"
 
-int main() {
-    
-    if (!game_init())
+int main() 
+{
+    Scene scene;
+
+    if (!game_init(scene))
     {
         std::cout << "Game closed due to error" << std::endl;
         return 1;
     }
 
-    game_run();
-    game_clean_up();
+    game_run(scene);
+    game_clean_up(scene);
 
     return 0;
 }

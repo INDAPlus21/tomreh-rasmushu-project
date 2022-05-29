@@ -2,44 +2,28 @@
 
 #define GLEW_STATIC 
 #include <GL/glew.h>
-#include <vector>
+#include "scene.h"
 
-bool renderer_init();
-void renderer_prepare();
-void renderer_render();
-void renderer_present();
-void renderer_clean_up();
+#define WINDOW_WIDTH 1240
+#define WINDOW_HEIGHT 720
 
-struct VertexBufferElement
+namespace Renderer
 {
-    unsigned int type;
-    unsigned int count;
-    unsigned char normalized;
+    void genBuffers(uint32_t *vb, 
+                    uint32_t *va, 
+                    const void* data,
+                    size_t size,
+                    std::vector<uint32_t> &layout);
+    void deleteBuffers(uint32_t *vb, uint32_t *va);
+    void createFullscreenQuad(Scene &scene);
+    void initRenderObject(RenderData &object);
+    void initFractalObject(FractalData &object);
 
-    static unsigned int GetSizeOfType(unsigned int type)
-    {
-        switch (type)
-        {
-            case GL_FLOAT: return 4;
-            case GL_UNSIGNED_INT: return 4;
-            case GL_UNSIGNED_BYTE: return 1;
-        }
-        return 0;
-    }
-};
+    bool init(Scene &scene);
+    bool render(Scene &scene);
+    bool renderFractal(Scene &scene);
+    void renderer_present();
+    void renderer_clean_up(Scene &scene);
+}
 
-struct Layout
-{
-    unsigned int stride;
-    std::vector<VertexBufferElement> elements;
-};
 
-void CreateThings();
-void GenVertexBuffer(unsigned int *id, const void* data, unsigned int size);
-void DeleteVetexBuffer(unsigned int *id);
-void GenVertexArray(unsigned int *id);
-void DeleteVertexArray(unsigned int *id);
-void GenIndexBuffer(unsigned int *id, const unsigned int *data, int count);
-void DeleteIndexBuffer(unsigned int *id);
-void ConfigVertexArrayLayout(unsigned int *va, unsigned int *vb, const Layout &layout);
-void AddToLayout(Layout &layout, GLuint type, unsigned int count, bool normalize = false);

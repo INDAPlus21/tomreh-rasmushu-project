@@ -4,35 +4,52 @@
 #include <iostream>
 #include <chrono>
 
-#include "renderer.h"
-
 static bool s_running = false;
 
-bool game_init()
+void initScene(Scene &scene)
+{
+	RenderData r_data;
+	Renderer::initRenderObject(r_data);
+	scene.render_list.push_back(r_data);
+
+	FractalData f_data;
+	Renderer::initFractalObject(f_data);
+	scene.fractal_list.push_back(f_data);
+}
+
+bool game_init(Scene &scene)
 {
 	std::cout << "Initializing game" << std::endl;
 
-	if (!renderer_init())
+	if (!Renderer::init(scene))
 	{
 		return false;
 	}
 
+	initScene(scene);
+
 	return true;
 }
 
-void game_run()
+void game_run(Scene &scene)
 {
 	std::cout << "Running game" << std::endl;
 
 	s_running = true;
 
-	CreateThings();
-
 	while (s_running)
 	{
-		renderer_prepare();
-		renderer_render();
-		renderer_present();
+		//if (!Renderer::render(scene))
+		//{
+		//	s_running = false;
+		//}
+
+		if (!Renderer::renderFractal(scene))
+		{
+			s_running = false;
+		}
+		
+		Renderer::renderer_present();
 
 		// HACK: Delta time should be calculated correctly
 		std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(16));
@@ -45,7 +62,7 @@ void game_close()
 	s_running = false;
 }
 
-void game_clean_up()
+void game_clean_up(Scene &scene)
 {
-	renderer_clean_up();
+	Renderer::renderer_clean_up(scene);
 }
